@@ -1163,21 +1163,884 @@ obj.foo();
 ### 13. Practice Problems: Dealing with Context Loss ([here](https://launchschool.com/lessons/c9200ad2/assignments/92892280))
 
 1. Our desired output for the code below is: `Christopher Turk is a Surgeon.` What will the code output, and what explains the difference, if any, between the actual and desired outputs?
+
+   ```javascript
+   let turk = {
+     firstName: 'Christopher',
+     lastName: 'Turk',
+     occupation: 'Surgeon',
+     getDescription() {
+       return this.firstName + ' ' + this.lastName + ' is a ' + this.occupation + '.';
+     }
+   };
+   
+   function logReturnVal(func) {
+     let returnVal = func();
+     console.log(returnVal);
+   }
+   
+   logReturnVal(turk.getDescription);
+   ```
+
+   ###### My Solution
+
+   My guess:
+
+   ```
+   undefined undefined is a undefined.
+   ```
+
+   After running the code without strict mode:
+
+   ```
+   undefined undefined is a undefined.
+   ```
+
+   If run with strict mode on, then we get the following:
+
+   ```
+   TypeError: Cannot read property 'firstName' of undefined
+   ```
+
+   We receive a `TypeError` in strict mode, indicating that the `firstName` property cannot be read of `undefined`. In non-strict mode, we get an output but not what we expect. In both cases, we realize that `this` is returning a value of `undefined` rather than an object. This is because when the `getDescription` function is passed to the `logReturnVal`, it loses its original execution context of `turk`. It now is associated with whatever the global object is.
+
+   ###### LS Solution
+
+   ```
+   undefined undefined is a undefined.
+   ```
+
+   When we extracted `getDescription` from `turk` and passed it into `logReturnVal` as an argument, we removed the method from its context. As a result, upon execution as `func`, `this` will point to the global object, rather than `turk`. Since `Window` doesn't have properties defined for `firstName`, `lastName`, or `occupation`, we get the output we do.
+
 2. Alter `logReturnVal` such that it takes an additional `context` argument, and use one of the methods we've learned in this lesson to invoke `func` inside of `logReturnVal` with `context` as its function execution context. Alter the invocation of `logReturnVal` and supply `turk` as the context argument.
+
+   ###### My Solution
+
+   ```javascript
+   // ... rest of code omitted for brevity
+   
+   function logReturnVal(func, context) {
+     let returnVal = func.call(context);
+     console.log(returnVal);
+   }
+   
+   logReturnVal(turk.getDescription, turk);
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   function logReturnVal(func, context) {
+     let returnVal = func.call(context);
+     console.log(returnVal);
+   }
+   
+   logReturnVal(turk.getDescription, turk);
+   ```
+
+   Using `call` to invoke `func` and passing in the argument `context`, we are able to supply the function with execution context. On the invocation on the last line of our code we do just this, supplying `turk` as the context and producing our desired output.  
+
+   Note that, in this case, the use of `apply` is equally suitable as a solution. 
+
 3. Suppose that we want to extract `getDescription` from `turk`, but always have it execute with `turk` as context. Use one of the methods we've learned in the last lesson to assign such a permanently bound function to a new variable, `getTurkDescription`.
+
+   ###### My Solution
+
+   ```javascript
+   let getTurkDescription = turk.getDescription.bind(turk);
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   let getTurkDescription = turk.getDescription.bind(turk);
+   ```
+
 4. Consider the code below, and our desired output:
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       this.titles.forEach(function(title) {
+         console.log(this.seriesTitle + ' ' + title);
+       });
+     }
+   };
+   
+   TESgames.listGames();
+   ```
+
+   Desired output:
+
+   ```
+   The Elder Scrolls Arena
+   The Elder Scrolls Daggerfall
+   The Elder Scrolls Morrowind
+   The Elder Scrolls Oblivion
+   The Elder Scrolls Skyrim
+   ```
+
+   ###### My Solution
+
+   No, this code will not log our desired output. The reason is that when we pass the function expresion to the `forEach` method we lose the execution context of `TESgames`. Therefore, `this` within the function expression points to the global object rather than `TESgames`.
+
+   ###### LS Solution
+
+   This code doesn't log our desired output, but instead logs this:
+
+   ```
+   undefined Arena
+   undefined Daggerfall
+   undefined Morrowind
+   undefined Oblivion
+   undefined Skyrim
+   ```
+
+   This happens because functions as arguments lose the surrounding context. In this case, the function expression invoked on each iteration of `forEach` inside of `listGames` loses `TESgames` as context. As a result, `this` on line 6 references the global object, and resolves to `undefined` rather than `"The Elder Scrolls"`.
+
 5. Use an arrow function so that the code logs our desired output.
+
+   ###### My Solution
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       this.titles.forEach((title) => {
+         console.log(this.seriesTitle + ' ' + title);
+       });
+     }
+   };
+   
+   TESgames.listGames();
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       this.titles.forEach((title) => {
+         console.log(this.seriesTitle + ' ' + title);
+       });
+     }
+   };
+   ```
+
 6. Use the `let self = this` fix to alter `TESgames.listGames` such that it logs our desired output to the console.
+
+   ###### My Solution
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       let self = this;
+       this.titles.forEach(function(title) {
+         console.log(self.seriesTitle + ' ' + title);
+       });
+     }
+   };
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       let self = this;
+       this.titles.forEach(function(title) {
+         console.log(self.seriesTitle + ' ' + title);
+       });
+     }
+   };
+   ```
+
 7. If we don't want to rely on `let self = this`, `forEach` provides us with an alternative means of supplying execution context to the inner function. Use this means to achieve our desired output.
+
+   ###### My Solution
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       this.titles.forEach(function(title) {
+         console.log(this.seriesTitle + ' ' + title);
+       }, this);
+     }
+   };
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   let TESgames = {
+     titles: ['Arena', 'Daggerfall', 'Morrowind', 'Oblivion', 'Skyrim'],
+     seriesTitle: 'The Elder Scrolls',
+     listGames() {
+       this.titles.forEach(function(title) {
+         console.log(this.seriesTitle + ' ' + title);
+       }, this);
+     }
+   };
+   ```
+
+   `forEach` (and many other list-processing methods) have an optional `thisArg` parameter that, if supplied an argument, sets that argument as execution context for the inner function. In the solution above, we pass `this` as the context argument, ensuring that the value of `this` in the inner function refers to `TESgames`.
+
 8. Consider the code below:
+
+   ```javascript
+   let foo = {
+     a: 0,
+     incrementA() {
+       function increment() {
+         this.a += 1;
+       }
+       
+       increment();
+     }
+   };
+   
+   foo.incrementA();
+   foo.incrementA();
+   foo.incrementA();
+   ```
+
+   What will the value of `foo.a` be after this code has executed?
+
+   ###### My Solution
+
+   ```
+   0
+   ```
+
+   ###### LS Solution
+
+   ```
+   foo.a // 0
+   ```
+
+   Since inner functions lose the outer object as context, `this.a` on line 5 references a global `a`, rather than `foo`'s property `a`. As a result, `foo.a` is unaltered by the method invocations, and its value remains `0`.
+
 9. Use one of the methods we learned in this lesson to invoke `increment` with explicit context such that `foo.a` is incremented with each invocation of `incrementA`.
+
+   ###### My Solution
+
+   ```javascript
+   let foo = {
+     a: 0,
+     incrementA() {
+       function increment() {
+         this.a += 1;
+       }
+       
+       increment.call(this);
+     }
+   };
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   let foo = {
+     a: 0,
+     incrementA() {
+       function increment() {
+         this.a += 1;
+       }
+   
+       increment.apply(this);
+     }
+   };
+   ```
+
+   We can use `apply` (or, for that matter, `call`) to invoke `increment` on line 8 with explicit context. We pass in `this` as the context argument, since inside of method space (but outside of inner function space) `this` references the containing object.
+
 10. We decide that we want each invocation of `foo.incrementA` to increment `foo.a` by `3`, rather than `1`, and alter our code accordingly:
 
+    ```javascript
+    let foo = {
+      a: 0,
+      incrementA() {
+        function increment() {
+          this.a += 1;
+        }
+        
+        increment.apply(this);
+        increment.apply(this);
+        increment.apply(this);
+      }
+    };
+    ```
 
+    Calling `apply` three times seems repetitive, though. Use `bind` to permanently set `foo` as `increment`'s execution context.
+
+    ###### My Solution
+
+    ```javascript
+    let foo = {
+      a: 0,
+      incrementA() {
+        let increment = function() {
+          this.a += 1;
+        }.bind(this);
+        
+        increment(this);
+        increment(this);
+        increment(this);
+      }
+    };
+    ```
+
+    ###### LS Solution
+
+    ```javascript
+    let foo = {
+      a: 0,
+      incrementA() {
+        let increment = function() {
+          this.a += 1;
+        }.bind(this);
+    
+        increment();
+        increment();
+        increment();
+      }
+    }
+    ```
+
+    We get to use `Function.prototype.bind` by changing the syntax for defining the `increment` function from a function declaration to a function expression. We then supply `this` as context, because `this` points to the object holding the method.
 
 ---
 
+### 14. Summary: The this Keyword in JavaScript ([here](https://launchschool.com/lessons/c9200ad2/assignments/76bc0829))
 
+#### Gentle explanation of 'this' keyword in JavaScript ([here](https://web.archive.org/web/20180209163541/https://dmitripavlutin.com/gentle-explanation-of-this-in-javascript/))
+
+##### 1. the mystery of `this`
+
+JavaScript has 4 function invocation types:
+
+1. function invocation: `alert('Hello world!')`
+2. method invocation: `console.log('Hello World!')`
+3. constructor invocation: `new RegEx('\\d')`
+4. indirect invocation: `alert.call(undefined, 'Hello World!')`
+
+Each invocation type defines the execution context in its own way.  
+
+Some terms to familiarize oneself with:
+
+* **Invocation** of a function is executing the code that makes the body of a function, or simply calling the function. For example, `parseInt` function invocation is `parseInt('15')`.
+* **Context** of an invocation is the value of `this` within function body. For example, the invocation of `map.set('key', 'value')` has the context `map`.
+* **Scope** of a function is the set of variables, objects, functions accessible within a function body.
+
+##### 2. Function invocation
+
+**Function invocation** is peformed when an expression that evaluates to a function object is followed by an open parenthesis (, a comma separated list of arguments expressions and a close parenthesis). For example, `parseInt('18')`.  
+
+*Function invocation* expression cannot be a [property accessor](https://web.archive.org/web/20180209163541/https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Property_accessors) `obj.myFunc()`, which creates a *method invocation*. For example `[1,5].join(',')` is **not** a function invocation, but a method call. This distinction is important to remember.  
+
+##### 2.1 `this` in function invocation
+
+_`this` is the **global object** in a function invocation_  
+
+The global object is determined by the execution environment. In a browser, it is the `window` object.  
+
+##### 2.2 `this` in function invocation, strict mode
+
+_`this` is `undefined` in a function invocation in strict mode_
+
+In strict mode, the execution context is **not** the global object anymore.
+
+##### 2.3 Pitfall: `this` in an inner function
+
+A common trap with the function invocation is thinking that `this` is the same in an inner function as in the outer function.  
+
+##### 3. Method invocation
+
+A **method** is a function stored in a property of an object. For example:
+
+```javascript
+var myObject = {
+  // helloFunction is a method
+  helloFunction: function() {
+    return 'Hello World!';
+  }
+};
+var message = myObject.helloFunction();
+```
+
+**Method invocation** is performed when an expression in the form of a property accessor that evaluates to a function object is followed by an open parenthesis `(`, a comma separated list of arguments expressions, and a close parenthesis `)`.  
+
+Recalling the previous example, `myObject.helloFunction()` is a method invocation of `helloFunction` on the object `myObject`. Other method calls include: `[1, 2].join(',')` or `/\s/.test('beautiful world')`.  
+
+It is important to distinguish **function invocation** from **method invocation**, because they are different types. The main difference is that method invocation requires a property accessor form to call the function (`obj.myFunc()` or `obj['myFunc']()`), while function invocation does not (`myFunc()`).  
+
+##### 3.1 `this` in method invocation
+
+_`this` is the **object that owns the method** in a method invocation_  
+
+When invoking a method on an object, `this` becomes the object itself.  
+
+##### 3.2 Pitfall: separating method from its object
+
+A method from an object can be extracted into a separated variable `var alone = myObj.myMethod`. When the method is called alone, detached from the original object `alone()`, you might think that `this` is the object on which the method was defined.  
+
+If the method is called without an object, then a function invocation happens: where `this` is the global object `window` or `undefined` in strict mode.  
+
+Creating a bound function `var alone = myObj.myMethod.bind(myObj)` (using `.bind()`) fixes the context, making it the object that owns the method.  
+
+##### 4. Constructor invocation
+
+LS says skip this section for now.
+
+##### 5. Indirect invocation
+
+**Indirect invocation** is performed when a function is called usying `myFun.call()` or `myFun.apply()` methods.  
+
+Functions in JavaScript are first-class objects, which means that a function is an object.  The type of this object is `Function`.  
+
+From the list of methods that a function object has, `.call()` and `.apply()` are used to invoke the function with a configurable context.
+
+##### 5.1 `this` in indirect invocation
+
+_`this` is the **first argument** of `.call()` or `.apply()` in an indirect invocation_  
+
+The indirect invocation is useful when a function should be executed with a specific context. For example, to solve the context problems with funciton invocation, where `this` is always `window` or `undefined` in strict mode. It can be used to simulate a method call on an object.  
+
+##### 6. Bound function
+
+**A bound function** is a function connected with an object. Usually it is created from the original function using `.bind()` method. The original and bound functions share the same code and scope, but different contexts on execution.  
+
+The method `.bind(thisArg[, arg1[, arg2[, ...]]])` accepts the first argument `thisArg` as the context of the bound function on invocation and an optional list of arguments `arg1, arg2, ...` that are passed as arguments to the called function. It returns a new function bound with `thisArg`.  
+
+Contrary to `.apply()` and `.call()` methods (see [5.](https://web.archive.org/web/20180209163541/https://dmitripavlutin.com/gentle-explanation-of-this-in-javascript/#5indirectinvocation)), which invokes the function right away, the `.bind()` method only returns a new function that it supposed to be invoked later with a pre-configured `this`.  
+
+##### 6.1 `this` in bound function
+
+_`this` is the **first argument** of `.bind()` when invoking a bound function_  
+
+The role of `.bind()` is to create a new function, which invocation will have the context as the first argument passed to `.bind()`. It is a powerful technique that allows one to create functions with a predefined `this` value.  
+
+##### 6.2 Tight context binding
+
+`.bind()` makes a **permanent context link** and will always keep it. A bound function cannot change its linked context when using `.call()` or `.apply()` with a different context, or even a rebound doesn't have any effect.  
+
+Only `new one()` changes the context of the bound function; other types of invocation always have `this` equal to `1`.  
+
+##### 7. Arrow function
+
+LS says skip this section for now.
+
+##### 8. Conclusion
+
+---
+
+### 15. Practice Problems: What is this? (1) ([here](https://launchschool.com/lessons/c9200ad2/assignments/82f593ef))
+
+1. What does `this` point to in the code below?
+
+   ```javascript
+   function whatIsMyContext() {
+     return this;
+   }
+   ```
+
+   ###### My Solution
+
+   It points to the global object, which is the `window` object in the browser.
+
+   ###### LS Solution
+
+   We won't know the context of a function until execution time. Thus, we don't know what the context is here.
+
+2. What does `this` point to in the code below?
+
+   ```javascript
+   function whatIsMyContext() {
+     return this;
+   }
+   
+   whatIsMyContext();
+   ```
+
+   ###### My Solution
+
+   It points to the global object, which is the `window` object in the browser.
+
+   ###### LS Solution
+
+   Function calls set the execution context to the **implicit global object**, or global context for short. When we use the global object implicitly to call a function, we call it with the **global context**.  
+
+   Functions called inside a browser environment use the `window` object as the implicit global context, so `this` is the `window` object inside the function.  
+
+   In strict mode, however, the global context is the value `undefined`.
+
+3. What does `this` point to in the code below?  
+
+   ```javascript
+   function foo() {
+     function bar() {
+       function baz() {
+         console.log(this);
+       }
+       
+       baz();
+     }
+     
+     bar();
+   }
+   
+   foo();
+   ```
+
+   ###### My Solution
+
+   It points to the global object. In the browser environment, `this` points to the `window` object.
+
+   ###### LS Solution
+
+   Since we call `baz` with the implicit global context, `this` is the `window` object.
+
+4. What does `this` point to in the code below?
+
+   ```javascript
+   let obj = {
+     count: 2,
+     method() {
+       return this.count;
+     },
+   };
+   
+   obj.method();
+   ```
+
+   ###### My Solution
+
+   It points to the `obj` object.  
+
+   ###### LS Solution
+
+   Since we call `method` on object `obj`, `this` is the object `obj`. Thus, the return value will be `2`.
+
+5. In strict mode, what does the following program log to the console?
+
+   ```javascript
+   function foo() {
+     console.log(this.a);
+   }
+   
+   let a = 2;
+   foo();
+   ```
+
+   ###### My Solution
+
+   In strict mode, the program will not log anything, but will return a `TypeError` because `this` is pointing to `undefined` and property `'a'` of `undefined` cannot be read.
+
+   ###### LS Solution
+
+   It raises an error. Since the function is called without an explicit object, `this` inside `foo` resolves to the global execution context, which is `undefined` in strict mode. The code raises an error because, in effect, we're trying to access the nonexistent `a` property of `undefined`.
+
+6. What does the following program log to the console?
+
+   ```javascript
+   let a = 1;
+   function bar() {
+     console.log(this.a);
+   }
+   
+   let obj = {
+     a: 2,
+     foo: bar,
+   };
+   
+   obj.foo();
+   ```
+
+   ###### My Solution
+
+   ```
+   1
+   ```
+
+   Originally, the execution context of the `foo()` method call on `obj` is set to `obj`, but since `foo` points to the `bar()` function the execution context for `bar`when it is invoked is the global context. In the global context, `a` is associated with the value `1`.
+
+   ###### LS Solution
+
+   ```
+   2
+   ```
+
+   Line 11 calls method `foo` with its context set to `obj` since the execution context for any method invoked without an explicit context provided is the calling object.
+
+7. What does the following code log to the console?
+
+   ```javascript
+   let foo = {
+     a: 1,
+     bar() {
+       console.log(this.baz());
+     },
+   
+     baz() {
+       return this;
+     },
+   };
+   
+   foo.bar();
+   let qux = foo.bar;
+   qux();
+   ```
+
+   ###### My Solution
+
+   ```
+   { a: 1, bar: { console.log(this.baz()) }, baz: { return this } }
+   TypeError
+   ```
+
+   Not totally sure about this one.
+
+   ###### LS Solution
+
+   ```
+   Object {a: 1, bar: f, baz: f}
+   Uncaught TypeError: this.baz is not a function
+   ```
+
+   Executing from line 12 sets `this` in `bar` to the `foo` object (via implicit method execution context). From the body of the `bar` method, it then calls `foo`'s `baz` method. `baz` returns `foo` since it has `foo`'s context (again via implicit method execution context; `this` === `foo` following the execution from line 12), which causes line 4 to log `foo`.  
+
+   Line 14 calls `bar` as a function in the global context, `window`; since `baz` doesn't exist in `window`, JavaScript raises an error.  
+
+---
+
+### 16. Practice Problems: What is this? (2) ([here](https://launchschool.com/lessons/c9200ad2/assignments/7bef6908))
+
+While working through these practice problems, assume that the code runs within a web page.  
+
+1. What does `this` point to in the code below, and what does the method return?
+
+   ```javascript
+   let myObject = {
+     count: 1,
+     myChildObject: {
+       myMethod() {
+         return this.count;
+       },
+     },
+   };
+   
+   myObject.myChildObject.myMethod();
+   ```
+
+   ###### My Solution
+
+   My guess is that this program will throw some kind of error since `myMethod()` is being called on the `myChildObject` and so `this` in the body of `myMethod()` is pointing to `myChildObject`, but since `myChildObject` does not have a `count` property, we get an error.  
+
+   When I actually run the code, it returns `undefined`.
+
+   ###### LS Solution
+
+   `this` is `myChildObject`, which means `this.count` is `undefined`, so the return value is `undefined`.
+
+2. In the previous problem, how would you change the context, or the value of `this`, to be the parent `myObject`?
+
+   ###### My Solution
+
+   We could try using the `call()` method to explicitly set the execution context for `myMethod()`.
+
+   ```javascript
+   myObject.myChildObject.myMethod.call(myObject);
+   ```
+
+   ###### LS Solution
+
+   We can use the `call` or `apply` method; all you have to do is pass in the appropriate context object:
+
+   ```javascript
+   myObject.myChildObject.myMethod.call(myObject);
+   ```
+
+3. What does the following code log to the console?
+
+   ```javascript
+   let person = {
+     firstName: 'Peter',
+     lastName: 'Parker',
+     fullName() {
+       console.log(this.firstName + ' ' + this.lastName +
+                   ' is the Amazing Spiderman!');
+     },
+   };
+   
+   let whoIsSpiderman = person.fullName.bind(person);
+   whoIsSpiderman();
+   ```
+
+   ###### My Solution
+
+   ```
+   Peter Parker is the Amazing Spiderman!
+   ```
+
+   ###### LS Solution
+
+   ```
+   Peter Parker is the Amazing Spiderman!
+   ```
+
+   The `bind` method returns a new function that permanently binds `this` in the function assigned to `fullName` to the `person` object itself.
+
+4. What does the following code log to the console?
+
+   ```javascript
+   let computer = {
+     price: 30000,
+     shipping: 2000,
+     total() {
+       let tax = 3000;
+       function specialDiscount() {
+         if (this.price > 20000) {
+           return 1000;
+         } else {
+           return 0;
+         }
+       }
+       
+       return this.price + this.shipping + tax - specialDiscount();
+     }
+   };
+   
+   console.log(computer.total());
+   ```
+
+   If you want this program to log `34000`, how would you fix it?
+
+   ###### My Solution
+
+   I believe the function will log:
+
+   ```
+   NaN
+   ```
+
+   This is because, the `total()` method returns a line of code that include the inner `specialDiscount()` function, and since this function has a `this` reference and `this` refers not to the `computer` object but the global object in this context, it will return `undefined` and so the whole line of code will add up to `NaN`.  
+
+   After running the code, we see that it actually logs the following to the console:
+
+   ```
+   35000
+   ```
+
+   However, what we want it to log is `34000`. Somehow, the `specialDiscount()` is just ignored but the rest of the numbers are computed. It must be that the `this.price` returns `undefined` and so the `if` conditional statement returns `false` and that part of the code does not run. Instead, the `else` condition is executed, which returns `0`. That means `specialDiscount()` returns `0` rather than `1000` and so we subtract `0` from the final result instead of `1000`.  
+
+   If we want to the code to execute properly and the program to log `34000`, we must set the execution context of `specialDiscount()` explicitly. We could do this by using the `call` or `apply` method.  
+
+   ```javascript
+   return this.price + this.shipping + tax - specialDiscount.call(computer);
+   ```
+
+   ###### LS Solution
+
+   As written, this code logs `35000` to the console. This is because `specialDiscount`'s `this` is the global object since we call `specialDiscount` as a function, which gives it implicit context. Thus, `specialDiscount` returns `0`. [Recall](https://launchschool.com/lessons/2555bbbb/assignments/28112e58) that nested functions lose the outer method's context.  
+
+   One way to fix this code is to save `this` in the function's lexical scope and use that saved value in place of `this`:
+
+   ```javascript
+   let computer = {
+     price: 30000,
+     shipping: 2000,
+     total() {
+       let tax = 3000;
+       let self = this;
+       function specialDiscount() {
+         if (self.price > 20000) {
+           return 1000;
+         } else {
+           return 0;
+         }
+       }
+   
+       return this.price + this.shipping + tax - specialDiscount();
+     }
+   };
+   
+   console.log(computer.total());
+   ```
+
+   Another way is to bind `this` from `total` to the `specialDiscount` function, which makes `this` inside `specialDiscount` the same as `this` in `total`.
+
+   ```javascript
+   let computer = {
+     price: 30000,
+     shipping: 2000,
+     total() {
+       let tax = 3000;
+       let specialDiscount = function () {
+         if (this.price > 20000) {
+           return 1000;
+         } else {
+           return 0;
+         }
+       }.bind(this);
+   
+       return this.price + this.shipping + tax - specialDiscount();
+     }
+   };
+   
+   console.log(computer.total());
+   ```
+
+   The final way to fix this code is to use `call` or `apply` with an argument of `this` to invoke `specialDiscount`:  
+
+   ```javascript
+   let computer = {
+     price: 30000,
+     shipping: 2000,
+     total() {
+       let tax = 3000;
+       function specialDiscount() {
+         if (this.price > 20000) {
+           return 1000;
+         } else {
+           return 0;
+         }
+       };
+   
+       return this.price + this.shipping + tax - specialDiscount.apply(this);
+     }
+   };
+   
+   console.log(computer.total());
+   ```
+
+---
+
+### 17. Summary ([here](https://launchschool.com/lessons/c9200ad2/assignments/8119e7ce))
+
+- Function invocations (e.g., `parseInt(numberString)`) rely upon implicit execution context that resolves to the global object. Method invocations (e.g., `array.forEach(processElement)`) rely upon implicit context that resolves to the object that holds the method.
+- All JavaScript code executes within a context. The top-level context in a web browser is the `window` object. All global methods and Objects (such as `parseInt` or `Math`) are properties of this object. In Node, the top-level context is called `global`. However, be aware that Node has some peculiarities that cause it to behave differently from browsers.  
+- You can't use `delete` to delete variables and functions declared at the global scope.
+- `this` is the current execution context of a function.
+- The value of `this` changes based on **how you invoke a function**, not **how you define it.**
+- In strict mode, `this` inside functions resolves to `undefined` when referring to the global execution context.  
+- JavaScript has **first-class functions** which have the following characteristics:
+  * You can add them to objects and execute them in the respective object's contexts.
+  * You can remove them from their objects, pass them around, and execute them in entirely different contexts.
+  * They're initally unbound, but dynamically bound to a context object at execution time.
+- `call` and `apply` invoke a function with an explicit execution context.
+- `bind` permanently binds a function to a context and returns a new function.
+- Method invocations can operate on the data of the calling object.
 
 
 
