@@ -463,3 +463,352 @@ const greeter = {
 ```
 
 Here we use an IIFE to set the value of the `message` property. This allows us to do all the work necessary for setting the value without using any extra global variables.
+
+---
+
+## School Improved
+
+In an [earlier exercise](https://launchschool.com/exercises/4f445afb), we created a `school` object. It works, however, it can still be improved. The following are improvements for you to implement in the solution provided:
+
+- Make the list `students` private. Right now, anyone can gain access to it and manipulate it.
+- Make the constraint for allowed values for years a private variable. As a private variable it avoids an unnecessary statement in the `addStudent` method and at the same time makes the code more declarative.
+- Make the `getCourse` function accessible in the `addGrade` method also. As it is, only the `courseReport` method has access.
+
+```javascript
+function createStudent(name, year) {
+  return {
+    name,
+    year,
+    courses: [],
+    info() {
+      console.log(`${this.name} is a ${this.year} year student`);
+    },
+
+    listCourses() {
+      return this.courses;
+    },
+
+    addCourse(course) {
+      this.courses.push(course);
+    },
+
+    addNote(courseCode, note) {
+      const course = this.courses.filter(({code}) => code === courseCode)[0];
+
+      if (course) {
+        if (course.note) {
+          course.note += `; ${note}`;
+        } else {
+          course.note = note;
+        }
+      }
+
+    },
+
+    viewNotes() {
+      this.courses.forEach(course => {
+        if (course.note) {
+          console.log(`${course.name}: ${course.note}`);
+        }
+      });
+    },
+
+    updateNote(courseCode, note) {
+      const course = this.courses.filter(({code}) => code === courseCode)[0];
+
+      if (course) {
+        course.note = note;
+      }
+    },
+  };
+}
+
+const school = {
+  students: [],
+  addStudent(name, year) {
+    if (['1st', '2nd', '3rd', '4th', '5th'].includes(year)) {
+      const student = createStudent(name, year);
+      this.students.push(student);
+      return student;
+    } else {
+      console.log('Invalid Year');
+    }
+  },
+  
+  enrollStudent(student, courseName, courseCode) {
+    student.addCourse({name: courseName, code: courseCode});
+  },
+  
+  addGrade(student, courseName, grade) {
+    const course = student.listCourses().filter(({name}) => name === courseName)[0];
+    
+    if (course) {
+      course.grade = grade;
+    }
+  },
+  
+  getReportCard(student) {
+    student.listCourses().forEach(({grade, name}) => {
+      if (grade) {
+        console.log(`${name}: ${String(grade)}`);
+      } else {
+        console.log(`${name}: In progress`);
+      }
+    });
+  },
+  
+  courseReport(courseName) {
+    function getCourse(student, courseName) {
+      return student.listCourses().filter(({name}) => name === courseName)[0];
+    }
+    
+    const courseStudents = this.students.map(student => {
+      const course = getCourse(student, courseName) || { grade: undefined };
+      return { name: student.name, grade: course.grade };
+    }).filter(({grade}) => grade);
+    
+    if (courseStudents.length > 0) {
+      console.log(`=${courseName} Grades=`);
+      
+      const average = courseStudents.reduce((total, {name, grade}) => {
+        console.log(`${name}: ${String(grade)}`);
+        return total + grade;
+      }, 0) / courseStudents.length;
+      
+      console.log('---');
+      console.log(`Course Average: ${String(average)}`);
+    }
+  },
+};
+```
+
+###### My Solution
+
+```javascript
+function createStudent(name, year) {
+  return {
+    name,
+    year,
+    courses: [],
+    info() {
+      console.log(`${this.name} is a ${this.year} year student`);
+    },
+
+    listCourses() {
+      return this.courses;
+    },
+
+    addCourse(course) {
+      this.courses.push(course);
+    },
+
+    addNote(courseCode, note) {
+      const course = this.courses.filter(({code}) => code === courseCode)[0];
+
+      if (course) {
+        if (course.note) {
+          course.note += `; ${note}`;
+        } else {
+          course.note = note;
+        }
+      }
+
+    },
+
+    viewNotes() {
+      this.courses.forEach(course => {
+        if (course.note) {
+          console.log(`${course.name}: ${course.note}`);
+        }
+      });
+    },
+
+    updateNote(courseCode, note) {
+      const course = this.courses.filter(({code}) => code === courseCode)[0];
+
+      if (course) {
+        course.note = note;
+      }
+    },
+  };
+}
+
+function createSchool() {
+  const students = [];
+  const VALID_YEARS = ['1st', '2nd', '3rd', '4th', '5th'];
+
+  return {
+    addStudent(name, year) {
+      if (VALID_YEARS.includes(year)) {
+        const student = createStudent(name, year);
+        students.push(student);
+        return student;
+      } else {
+        console.log('Invalid Year');
+      }
+    },
+
+    getStudent(studentName, studentYear) {
+      return students.filter(({name, year}) => {
+        return name === studentName && year === studentYear;
+      })[0];
+    },
+    
+    enrollStudent(student, courseName, courseCode) {
+      student.addCourse({name: courseName, code: courseCode});
+    },
+    
+    addGrade(student, courseName, grade) {
+      const course = this.getCourse(student, courseName);
+      
+      if (course) {
+        course.grade = grade;
+      }
+    },
+    
+    getReportCard(student) {
+      student.listCourses().forEach(({grade, name}) => {
+        if (grade) {
+          console.log(`${name}: ${String(grade)}`);
+        } else {
+          console.log(`${name}: In progress`);
+        }
+      });
+    },
+
+    getCourse(student, courseName) {
+      return student.listCourses().filter(({name}) => name === courseName)[0];
+    },
+    
+    courseReport(courseName) {
+      const courseStudents = students.map(student => {
+        const course = this.getCourse(student, courseName) || { grade: undefined };
+        return { name: student.name, grade: course.grade };
+      }).filter(({grade}) => grade);
+      
+      if (courseStudents.length > 0) {
+        console.log(`=${courseName} Grades=`);
+        
+        const average = courseStudents.reduce((total, {name, grade}) => {
+          console.log(`${name}: ${String(grade)}`);
+          return total + grade;
+        }, 0) / courseStudents.length;
+        
+        console.log('---');
+        console.log(`Course Average: ${String(average)}`);
+      }
+    },
+  };
+}
+
+let school = createSchool();
+
+school.addStudent('foo', '3rd');
+let foo = school.getStudent('foo', '3rd');
+school.enrollStudent(foo, 'Math', 101);
+school.enrollStudent(foo, 'Advanced Math', 102);
+school.enrollStudent(foo, 'Physics', 202);
+school.addGrade(foo, 'Math', 95);
+school.addGrade(foo, 'Advanced Math', 90);
+school.getReportCard(foo);
+console.log('---------')
+
+school.addStudent('bar', '1st');
+let bar = school.getStudent('bar', '1st');
+school.enrollStudent(bar, 'Math', 101);
+school.addGrade(bar, 'Math', 91);
+school.getReportCard(bar);
+console.log('---------')
+
+school.addStudent('qux', '2nd');
+let qux = school.getStudent('qux', '2nd');
+school.enrollStudent(qux, 'Math', 101);
+school.enrollStudent(qux, 'Advanced Math', 102);
+school.addGrade(qux, 'Math', 93);
+school.addGrade(qux, 'Advanced Math', 90);
+school.getReportCard(qux);
+console.log('---------')
+
+school.courseReport('Math');
+school.courseReport('Advanced Math');
+school.courseReport('Physics');
+```
+
+###### LS Solution
+
+```javascript
+const school = (() => {
+  const students = [];
+  const allowedYears = ['1st', '2nd', '3rd', '4th', '5th'];
+
+  function getCourse(student, courseName) {
+    return student.listCourses().filter(({name}) => name === courseName)[0];
+  }
+
+  return {
+    addStudent(name, year) {
+      if (allowedYears.includes(year)) {
+        const student = createStudent(name, year);
+        students.push(student);
+        return student;
+      } else {
+        console.log('Invalid Year');
+      }
+    },
+
+    enrollStudent(student, courseName, courseCode) {
+      student.addCourse({
+        name: courseName,
+        code: courseCode
+      })
+    },
+
+    addGrade(student, courseName, grade) {
+      const course = getCourse(student, courseName);
+
+      if (course) {
+        course.grade = grade;
+      }
+    },
+
+    getReportCard(student) {
+      student.listCourses().forEach(({grade, name}) => {
+        if (grade) {
+          console.log(`${name}: ${String(grade)}`);
+        } else {
+          console.log(`${name}: In progress`);
+        }
+      });
+    },
+
+    courseReport(courseName) {
+      const courseStudents = students.map(student => {
+        const course = getCourse(student, courseName) || {
+          grade: undefined
+        };
+        return {
+          name: student.name,
+          grade: course.grade
+        };
+      }).filter(({grade}) => grade);
+
+      if (courseStudents.length > 0) {
+        console.log(`=${courseName} Grades=`);
+
+        const average = courseStudents.reduce((total, {name, grade}) => {
+          console.log(`${name}: ${String(grade)}`);
+          return total + grade;
+        }, 0) / courseStudents.length;
+
+        console.log('---');
+        console.log(`Course Average: ${String(average)}`);
+      }
+    },
+  };
+})();
+```
+
+###### Discussion
+
+The key for all improvements is the use of an IIFE. The IIFE is used to create a function that returns an object that has access to variables and functions in the function expressions' body. Because of the concept of closures, those variables and functions are accessible to the methods of the returned object. Furthermore, since the function expression creates a scope, those variables and functions aren't accessible outside of the function.  
+
