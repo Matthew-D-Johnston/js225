@@ -1,4 +1,4 @@
-##### JS225 Closures and Function Scope
+##### JS225 Object Oriented JavaScript
 
 ---
 
