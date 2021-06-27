@@ -1981,13 +1981,162 @@ The `dexter` object now has its own `bark` method that **overrides** the `bark` 
 
 3. Create a function that can create an object with a given object as its prototype, without using `Object.create`.
 
+   ```javascript
+   function createObject(obj) {
+     // ...
+   }
+   
+   let foo = {
+     a: 1
+   };
+   
+   let bar = createObject(foo);
+   foo.isPrototypeOf(bar);
+   ```
+
+   ###### My Solution 1
+
+   ```javascript
+   function createObject(obj) {
+     let newObj = {};
+     newObj.__proto__ = obj;
+     return newObj;
+   }
+   
+   let foo = {
+     a: 1
+   };
+   
+   let bar = createObject(foo);
+   foo.isPrototypeOf(bar);
+   ```
+
+   ###### My Solution 2
+
+   ```javascript
+   function createObject(obj) {
+     let newObj = {};
+     Object.setPrototypeOf(newObj, obj);
+     return newObj;
+   }
+   
+   let foo = {
+     a: 1
+   };
+   
+   let bar = createObject(foo);
+   foo.isPrototypeOf(bar);
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   function createObject(obj) {
+     function F() {}
+     F.prototype = obj;
+     return new F();
+   }
+   ```
+
+   We can create a temporary constructor function, set its prototype object to the argument, then create an object based on the constructor. In fact, this is a simplified implementation for `Object.create` itself!  
+
+   See it at the bottom of [this page](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create).
+
+   ###### LS Alternative Solution
+
+   ```javascript
+   function createObject(obj) {
+     return Object.setPrototypeOf({}, obj);
+   }
+   ```
+
+   This solution also works. However, please take note of [the warning from MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/setPrototypeOf) when using `Object.setPrototypeof`. 
+
 4. Similar to the problem above, without using `Object.create`, create a `begetObject` method that you can call on any object to create an object inherited from it:
+
+   ```javascript
+   let foo = {
+     a: 1,
+   };
+   
+   let bar = foo.begetObject();
+   foo.isPrototypeOf(bar);						// true
+   ```
+
+   ###### My Solution
+
+   ```javascript
+   Object.prototype.begetObject = function() {
+     function F() {};
+     F.prototype = this;
+     return new F();
+   }
+   
+   let foo = {
+     a: 1,
+   };
+   
+   let bar = foo.begetObject();
+   foo.isPrototypeOf(bar);
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   Object.prototype.begetObject = function () {
+     function F() {}
+     F.prototype = this;
+     return new F();
+   }
+   ```
+
+   Since the `begetObject` function can be called on any object, we'll need to make it a function defined on `Object.prototype`.
 
 5. Create a function `neww`, so that it works like the `new` operator. For this practice problem, you may use `Object.create`.
 
+   ```javascript
+   function neww(constructor, args) {
+     // ..
+   }
+   
+   function Person(firstName, lastName) {
+     this.firstName = firstName;
+     this.lastName = lastName;
+   }
+   
+   Person.prototype.greeting = function() {
+     console.log('Hello, ' + this.firstName + ' ' + this.lastName);
+   };
+   
+   let john = neww(Person, ['John', 'Doe']);
+   john.greeting();					// => Hello, John Doe
+   john.constructor;				  // Person(firstName, lastName) {...}
+   ```
 
+   ###### My Solution
+
+   ```javascript
+   function neww(constructor, args) {
+     let obj = Object.create(constructor.prototype);
+     obj.constructor(...args);
+     return obj;
+   }
+   ```
+
+   ###### LS Solution
+
+   ```javascript
+   function neww(constructor, args) {
+     let object = Object.create(constructor.prototype);
+     let result = constructor.apply(object, args);
+     
+     return typeof result === 'object' ? result : object;
+   }
+   ```
 
 ---
+
+### 12. Static and Instance Properties and Methods ([here](https://launchschool.com/lessons/24a4613a/assignments/158c7550))
 
 
 
