@@ -2138,6 +2138,504 @@ The `dexter` object now has its own `bark` method that **overrides** the `bark` 
 
 ### 12. Static and Instance Properties and Methods ([here](https://launchschool.com/lessons/24a4613a/assignments/158c7550))
 
+In OOP, we often refer to individual objects of a specific data type as **instances** of that type. For example, in the [Constructors, Prototypes, and the Prototype Chain assignment](https://launchschool.com/lessons/24a4613a/assignments/5de6e5a0), `maxi` and `dexter` are instances of the `Dog` type. An instance is just another term for the objects created using any means of defining multiple objects of the same kind (e.g., dogs). The term *object* is more general, while *instance* is more specific.  
+
+#### Instance Properties
+
+It's convenient to describe the properties of an instance as **instance properties**. These properties belong to a specific instance of some type. Thus, in our `Dog` example, we say that the `name`, `breed`, and `weight` properties are all instance properties of the various instances of the `Dog` type. If we want to access the weight for `Maxi` from the above example, we must use the `maxi` object:
+
+```javascript
+maxi.weight; // 32
+```
+
+If we try to use the constructor, instead, it won't work:
+
+```javascript
+Dog.weight; // undefined
+```
+
+This code returns `undefined` since `weight` isn't a property of the constructor; it's a property of the instances created by that constructor. It also doesn't make sense to define it on the constructor function: `weight` is a property of an individual dog, not one that is related to dogs as a type.  
+
+#### Instance Methods  
+
+Since methods are also properties on an object, we can refer to methods stored directly in an object as instance properties too. More commonly, we call them **instance methods** just to distinguish them from ordinary data properties.  
+
+However, methods usually shouldn't be stored directly in instances. Instead, they should be stored in the instance's prototype. While methods defined on the prototype aren't stored in the instance object, they still operate on individual instances. Therefore, we usually refer to methods on the prototype as instance methods as well. In our `Dog` example, `bark` is an instance method since it's defined on the `Dog.prototype` object.  
+
+As with `weight`, we must use an object created by the `Dog` constructor to invoke `bark`:
+
+```javascript
+maxi.bark(); // Woof!
+```
+
+Again, we can't use the constructor to call this method:
+
+```javascript
+Dog.bark(); // TypeError: Dog.bark is not a function
+```
+
+#### Static Properties
+
+**Static properties** are defined and accessed directly on the constructor, not on an instance or a prototype. Typically, static properties belong to the type (e.g., `Dog`) rather than to the individual instances or the prototype object.  
+
+For instance, dogs belong to the species "Canis lupus". That property of dogs doesn't have anything to do with individual dogs; it's information that is pertinent about all dogs. Therefore, it makes sense to add this property directly to the `Dog` constructor as a static property:
+
+```javascript
+Dog.species = "Canis lupus";
+```
+
+Now, when our application needs to know the species that dogs belong to, we can access it from the constructor directly:  
+
+```javascript
+console.log(`Dogs belong to the species ${Dog.species}`);
+```
+
+One common use of static properties is to keep track of all of the objects created by a constructor. For instance:  
+
+```javascript
+function Dog(name, breed, weight) {
+  this.name = name;
+  this.breed = breed;
+  this.weight = weight;
+  Dog.allDogs.push(this);
+}
+
+Dog.allDogs = [];
+```
+
+In this case, the static property `allDogs` contains an array with a reference to every `Dog` object created while the program is running. While `allDogs` maintains a list of all the dogs, it isn't information that is pertinent to a specific dog -- it's information about dogs in general. Therefore, it should be a static property.  
+
+#### Static Methods
+
+Static properties don't have to be ordinary data properties. You can also define static methods:  
+
+```javascript
+Dog.showSpecies = function() {
+  console.log(`Dogs belong to the species ${Dog.species}`);
+};
+
+Dog.showSpecies();
+```
+
+You've already seen examples of static methods on built-in JavaScript constructors. `Object.assign`, `Array.isArray`, and `Date.now` are all examples of static methods.  
+
+---
+
+### 13. The Pseudo-classical Pattern and the OLOO Pattern
+
+After all the explanations on factory functions, constructors and prototypes, we may have confused you on how you should create objects in JavaScript. Here we're going to prescribe two best practice patterns: the Pseudo-classical Pattern and the OLOO (Object Linking to Other Object) Pattern.  
+
+#### Object Creation Considerations
+
+Before we get into the two object creation patterns, let's use an example to see the typical considerations we face when we need to create similar objects. For example, we may have the object `pointA` to represent a point in the coordinate plane, who also knows [how to calculate its distance to the origin](http://www.math-only-math.com/distance-of-a-point-from-the-origin.html), and whether it's on the X or the Y axis:  
+
+```javascript
+let pointA = {
+  x: 30,
+  y: 40,
+  
+  onXAxis() {
+    return this.y === 0;
+  },
+  
+  onYAxis() {
+    return this.x === 0;
+  },
+  
+  distanceToOrigin() {
+    return Math.sqrt((this.x * this.x) + (this.y * this.y));
+  },
+};
+
+pointA.distanceToOrigin();			// 50
+pointA.onXAxis();								// false
+pointA.onYAxis();								// false
+```
+
+Use of the object literal form is great if all we need is one object. When we need to have many points in our program, we'd like our points to:  
+
+- Be able to have their own **states**, represented by the x and y values;
+- Share the `distanceToOrigin`, `onXAxis` and `onYAxis` **behaviors**, because they work the same way for all points on the coordinate plane.
+
+#### The Pseudo-classical Pattern
+
+The Pseudo-classical pattern is a combination of the constructor pattern and the prototype pattern. With this pattern, we use a constructor to set object states, and put shared methods on the constructor function's prototype:  
+
+```javascript
+let Point = function(x = 0, y = 0) {            // capitalized constructor name as a convention
+  this.x = x;                                   // initialize states with arguments
+  this.y = y;                                   // 0 as default value
+};
+
+Point.prototype.onXAxis = function() {  // shared behaviors added to constructor's prototype property
+  return this.y === 0;
+};
+
+Point.prototype.onYAxis = function() {  // these methods are added one by one
+  return this.x === 0;
+};
+
+Point.prototype.distanceToOrigin = function() {
+  return Math.sqrt((this.x * this.x) + (this.y * this.y));
+};
+
+let pointA = new Point(30, 40);         // use new to create objects
+let pointB = new Point(20);
+
+pointA instanceof Point;                // use instanceof to check type
+pointB instanceof Point;
+
+pointA.distanceToOrigin();              // 50
+pointB.onXAxis();                       // true
+```
+
+#### The OLOO Pattern
+
+OLOO, which stands for "Object Linking to Other Objects," was first popularized by Kyle Simpson. JavaScript sheds its pretense as a "class oriented" language, where it uses constructor functions as fake classes. Instead, it embraces its prototype based object model. With the OLOO pattern, we define the shared behaviors on a prototype object, then use `Object.create` to create objects that delegate directly from that object, without going through the roundabout way that involves "constructors and their prototype properties."  
+
+```javascript
+let Point = {             // capitalized name for the prototype as a convention
+  onXAxis() {             // shared methods defined on the prototype
+    return this.y === 0;
+  },
+
+  onYAxis() {
+    return this.x === 0;
+  },
+
+  distanceToOrigin() {
+    return Math.sqrt((this.x * this.x) + (this.y * this.y));
+  },
+
+  init(x, y) {            // optional init method to set states
+    this.x = x;
+    this.y = y;
+    return this;
+  },
+};
+
+let pointA = Object.create(Point).init(30, 40);
+
+Point.isPrototypeOf(pointA);        // use isPrototypeOf to check type
+Point.isPrototypeOf(pointA);
+
+pointA.distanceToOrigin();          // 50
+pointA.onXAxis();                   // false
+```
+
+Note that this form OLOO requires you to call the `init` method after creating the new object. If you don't call `init`, the various properties may not be assigned to usable values.  
+
+If you want, you can provide default values so you don't need to call `init`:  
+
+```javascript
+let Point = {             // capitalized name for the prototype as a convntion
+  x: 0,
+  y: 0,
+
+  onXAxis() {             // shared methods defined on the prototype
+    return this.y === 0;
+  },
+
+  onYAxis() {
+    return this.x === 0;
+  },
+
+  distanceToOrigin() {
+    return Math.sqrt((this.x * this.x) + (this.y * this.y));
+  },
+
+  init(x, y) {            // optional init method to set states
+    this.x = x;
+    this.y = y;
+    return this;
+  },
+};
+
+let pointB = Object.create(Point);
+
+Point.isPrototypeOf(pointB);
+pointB.distanceToOrigin();          // 0
+pointB.onXAxis();                   // true
+```
+
+---
+
+### 14. The Class Syntactic Sugar
+
+In this assignment, we'll look at the `class` keyword. ES6 has introduced `class` as another way to create objects as well as establish inheritance. The usage of `class` in JavaScript though is quite misleading as the language doesn't really have true classes. As you know by now, JavaScript implements object-oriented features through prototypes.  
+
+What is `class`? Simply, it is just syntactic sugar that wraps around one of the object creation patterns we have already discussed - pseudo-classical pattern. In other words, it is just another way to write code.  
+
+Recall the psuedo-classical example in the previous assignment.  
+
+```javascript
+function Point(x = 0, y = 0) {
+  this.x = x;
+  this.y = y;
+};
+
+Point.prototype.onXAxis = function() {
+  return this.y === 0;
+};
+
+Point.prototype.onYAxis = function() {
+  return this.x === 0;
+};
+
+Point.prototype.distanceToOrigin = function() {
+  return Math.sqrt((this.x * this.x) + (this.y * this.y));
+};
+```
+
+Lines 1 to 4 defines the `Point` constructor function, while lines 6 to 16 define methods on `Point.prototype`. No surprises here. How then do we "translate" this same code and functionality in the form of the `class` syntactic sugar?  
+
+```javascript
+class Point {
+  constructor(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+  }
+
+  onXAxis() {
+    return this.y === 0;
+  }
+
+  onYAxis() {
+    return this.x === 0;
+  }
+
+  distanceToOrigin() {
+    return Math.sqrt((this.x * this.x) + (this.y * this.y));
+  }
+}
+```
+
+Though they may look different, both programs functionally do the exact same thing. You can check out the image below to see them side-by-side.  
+
+![img](https://d3905n0khyu9wc.cloudfront.net/images/class_vs_pseudo_classical.png)
+
+Syntactically, there are three main differences here:
+
+1. The obvious one is the use of the keyword `class` instead of `function`.
+2. Parameters are defined and states are set within the `constructor` function, which automatically runs whenever an object is created.
+3. All methods defined within the `class` definition, with the exception of `constructor`, are defined on the prototype object. In this case, on `Point.prototype`.
+
+How about instantiating objects? We do that exactly the same way that we create objects with constructor functions.
+
+```javascript
+class Point {
+  constructor(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+  }
+
+  // rest of the code
+}
+
+let pointA = new Point(30, 40);
+let pointB = new Point(20);
+
+pointA instanceof Point;                // true
+pointB instanceof Point;                // true
+
+pointA.distanceToOrigin();              // 50
+pointB.onXAxis();                       // true
+```
+
+#### A Couple of Caveats
+
+There is nothing special with the `class` "method" of object creation. Again, it is merely syntactic sugar. However there are things we need to take note of.
+
+1. All code in `class` executes in strict mode.
+
+2. Unlike function declarations, class declarations are not hoisted.
+
+   ```javascript
+   let pointA = new Point(30, 40);           // ReferenceError: Point is not defined
+   
+   class Point {
+     constructor(x = 0, y = 0) {
+       this.x = x;
+       this.y = y;
+     }
+   
+   // rest of the code
+   }
+   ```
+
+3. Invoking the class constructor without the `new` keyword raises an error.
+
+   ```javascript
+   class Point {
+     constructor(x = 0, y = 0) {
+       this.x = x;
+       this.y = y;
+     }
+   
+   // other code
+   }
+   
+   let pointA = Point(30, 40);               // TypeError: Class constructor Point cannot be invoked without 'new'
+   ```
+
+---
+
+### 15. More Methods on the Object Constructor
+
+We'd like to highlight a few more methods on the `Object` constructor.  
+
+#### Object.create and Object.getPrototypeOf
+
+The `getPrototypeOf` method on `Object` is used to return the prototype object of an object that is passed in. When we combine it with `Object.create` we can create a prototype chain that mimics classical inheritance.  
+
+Let's study the following code:  
+
+```javascript
+Object.getPrototypeOf([]) === Array.prototype;		// true
+
+function NewArray() {}
+NewArray.prototype = Object.create(Object.getPrototypeOf([]));
+```
+
+The empty array is an object whose prototype object is the `Array.prototype` object. Then we create a function and use `Object.create` to have the `NewArray.prototype` object inherit from `Array.prototype`.  
+
+```javascript
+NewArray.prototype.first = function() {
+  return this[0];
+};
+```
+
+Next we add a method on `NewArray.prototype`. `NewArray.prototype` can now delegate all the Array methods to `Array.prototype`, and it has the special ability to respond to `first` and return the first element in the array.
+
+```javascript
+let newArr = new NewArray();
+let oldArr = new Array();
+
+oldArr.push(5);
+newArr.push(5);
+oldArr.push(2);
+newArr.push(2);
+console.log(newArr.first());           // => 5
+console.log(oldArr.first);             // => undefined
+```
+
+#### Object.defineProperties
+
+We want to have an object constructor that returns a new object with a log function that cannot be modified. In a normal constructor this is not possible. However, using the `defineProperties` method on `Object` we can provide properties and values and set whether each property can be changed or not. Here is an example of creating a property on an object that is read-only.
+
+```javascript
+let obj = {
+  name: 'Obj',
+};
+
+Object.defineProperties(obj, {
+  age: {
+    value: 30,
+    writable: false,
+  },
+});
+
+console.log(obj.age); // => 30
+obj.age = 32;         // throws an error in strict mode
+console.log(obj.age); // => 30
+```
+
+Using this method, create a function that constructs a new object with a `log` method that is read-only. The log method will use console.log to output the `name` property on itself.  
+
+```javascript
+function newPerson(name) {
+  // ...
+}
+
+let me = newPerson('Shane Riley');
+me.log();     // => Shane Riley
+me.log = function() { console.log('Amanda Rose'); };
+me.log();     // => Shane Riley
+```
+
+###### My Solution
+
+```javascript
+function newPerson(name) {
+  let obj = {
+    name,
+  };
+
+  Object.defineProperties(obj, {
+    log: {
+      value: function() { console.log(this.name); },
+      writable: false,
+    },
+  });
+
+  return obj;
+}
+```
+
+###### LS Solution
+
+```javascript
+function newPerson(name) {
+  return Object.defineProperties({ name: name }, {
+    log: {
+      value() {
+        console.log(this.name);
+      },
+      writable: false
+    },
+  });
+}
+```
+
+#### Object.freeze
+
+If we wanted to have an object with properties that are all immutable, or not able to be changed, we can use the `Object.freeze` method to prevent anything from being changed about an object. This prevents any property values that are not objects from being changed or deleted.  
+
+```javascript
+let frozen = {
+  integer: 4,
+  string: 'String',
+  array: [1, 2, 3],
+  object: {
+    foo: 'bar'
+  },
+  func() {
+    console.log('I\'m frozen');
+  },
+};
+
+Object.freeze(frozen);
+frozen.integer = 8;
+frozen.string = 'Number';
+frozen.array.pop();
+frozen.object.foo = 'baz';
+frozen.func = function() {
+  console.log('I\'m not really frozen');
+};
+
+console.log(frozen.integer);      // => 4
+console.log(frozen.string);       // => String
+console.log(frozen.array);        // => [1, 2]
+console.log(frozen.object.foo);   // => baz
+frozen.func();                    // => I'm frozen
+```
+
+Can you explain why the array and object properties are changed, but the method is not?  
+
+###### My Solution
+
+I would say that in the case of the array and object properties, we are able to change them because they are mutable and all we have done is frozen the reference of the variable name to the object. Thus, the variable name pointing to the array and the object is still pointing to the same array and object after mutation. If we tried to reassign to a new array or object then it wouldn't work because we have frozen the reference. However, that does not provent us from manipulating the array and object itself. In the case of the function, we attempted to reassing a brand new function to the variable name, which because we have frozen the original reference, we are unable to do the reassignment.  
+
+###### LS Solution
+
+For property values that are objects, the references to the objects are frozen. This means that you can't point to other objects, but you can still use the frozen references to mutate the objects.  
+
+Keep in mind that if you freeze an object, it cannot be unfrozen.  
+
+---
+
+
+
 
 
  
