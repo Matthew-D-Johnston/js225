@@ -2634,6 +2634,14 @@ Keep in mind that if you freeze an object, it cannot be unfrozen.
 
 ---
 
+### 16. Modules ([here](https://launchschool.com/lessons/24a4613a/assignments/be1ff8b5))
+
+---
+
+### 17. Douglas Crockford Lecture - JavaScript: the Good Parts ([here](https://launchschool.com/lessons/24a4613a/assignments/a02e7ce6))
+
+https://www.youtube.com/watch?v=hQVTIJBZook&t=22m
+
 
 
 
