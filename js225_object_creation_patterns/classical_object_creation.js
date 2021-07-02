@@ -101,14 +101,14 @@ GraduateStudent.prototype.research = () => { console.log('Researching') };
 // console.log(student.fullName());
 // student.study();
 
-const graduateStudent = new GraduateStudent('Matthew', 'Johnston', 37, 'male', 'BA Philosophy', 'MA Economics');
+// const graduateStudent = new GraduateStudent('Matthew', 'Johnston', 37, 'male', 'BA Philosophy', 'MA Economics');
 
-console.log(graduateStudent instanceof Person);
-console.log(graduateStudent instanceof Student);
-console.log(graduateStudent instanceof GraduateStudent);
-graduateStudent.eat();
-graduateStudent.communicate();
-graduateStudent.sleep();
-console.log(graduateStudent.fullName());
-graduateStudent.study();
-graduateStudent.research();
+// console.log(graduateStudent instanceof Person);
+// console.log(graduateStudent instanceof Student);
+// console.log(graduateStudent instanceof GraduateStudent);
+// graduateStudent.eat();
+// graduateStudent.communicate();
+// graduateStudent.sleep();
+// console.log(graduateStudent.fullName());
+// graduateStudent.study();
+// graduateStudent.research();
