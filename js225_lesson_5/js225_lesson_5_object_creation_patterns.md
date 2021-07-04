@@ -2221,7 +2221,7 @@ You've already seen examples of static methods on built-in JavaScript constructo
 
 ---
 
-### 13. The Pseudo-classical Pattern and the OLOO Pattern
+### 13. The Pseudo-classical Pattern and the OLOO Pattern ([here](https://launchschool.com/lessons/24a4613a/assignments/b01b636b))
 
 After all the explanations on factory functions, constructors and prototypes, we may have confused you on how you should create objects in JavaScript. Here we're going to prescribe two best practice patterns: the Pseudo-classical Pattern and the OLOO (Object Linking to Other Object) Pattern.  
 
