@@ -42,6 +42,22 @@ You should be able to clearly explain and apply the following concepts:
 - Object factories allow us to create a single function that can be reused to make multiple instances of a particular type of object with similar properties and behavior.
 - When an object factory creates objects wich have the same properties, they do not return `true` when compared with the strict equality operator.
 
+##### Instances
+
+* In OOP, we often refer to individual objects of a specific data type as **instances** of that type.
+* An instance is just another term for the objects created using any means of defining multiple objects of the same kind (e.g., dogs). The term _object_ is more general, while _instance_ is more specific.  
+
+###### Instance Properties
+
+* It's convenient to describe the properties of an instance as **instance properties**. These properties belong to a specific instance of some type.
+* In our `Dog` example, we say that the `name`, `breed`, and `weight` properties are all instance properties of the various instances of the `Dog` type.
+
+###### Instance Methods
+
+* Since methods are also properties on an object, we can refer to methods stored directly in an object as instance properties too. More commonly, we call them **instance methods** just to distinguish them from ordinary data properties.  
+* However, methods usually shouldn't be stored directly in instances. Instead, they should be stored in the instance's prototype. While methods defined on the prototype aren't stored in the instance object, they still operate on individual instances. Therefore, we usually refer to methods on the prototype as instance methods as well. In our `Dog` example, `bark` is an instance method since it's defined on the `Dog.prototype` object.
+* 
+
 ---
 
 ### Determining/setting function execution context (`this`)
@@ -449,6 +465,11 @@ obj.foo();
 
 ### Scope and Closures
 
+* The concepts of closure and scope are intimately related. Closures use the scope in effect at a function's definition point to determine what variables that function can access. What variables are in scope during a function's execution depend on the closure formed by the function's definition. It's somewhat circular reasoning, but it's impossible to separate the two.  
+* MDN defines **closure** as "the combination of a function and the lexical environment within which that function was [defined]." You can think of closure as a function combined with any variables from its lexical scope that the function needs. In other words, if a function uses a variable that is not declared or initialized in that function, then that variable will be part of the closure (provided it exists).
+* Closures are created when you define a function or method. The closure essentially _closes over_ its environment--what's in scope. In effect, the function definition and its scope become a single entity called a closure. When the function is invoked, it can access any variables it needs from that environment. That is, the function can use variables from the lexical scope where the function was defined. **Even if those variables aren't in the lexical scope where you invoke the function, it can still access them.**  
+* Note that closures only close over the variables that the function needs. If the function uses the variable `foo`, but the outer scope contains both `foo` and `bar`, only `foo` will be included in the closure.  
+* Wait a minute. How can you use variables that aren't in scope? Doesn't scope govern what variables you can use? Yes, that's true, but it's a little imprecise. When we say that a variable is no longer in scope, we mean that it isn't in scope at the point in your program where you invoke the function. However, closure and scope are lexical concepts. Where you invoke a function is unimportant; where you define the function is. A closure includes the variables it needs from the scope where you defined the function. Those variables may not be in scope when you invoke the function, but they're still available to the function.
 * All functions, regardless of syntax, obey the same lexical scoping rules:
   * They can access any variables defined within it.
   * They can access any variables that were in scope based on the context where the function was **defined**.
@@ -489,7 +510,10 @@ obj.foo();
 
 * **Higher-order functions** can accept a function as an argument, return a function when invoked, or both. In other words, higher-order functions work with other functions.
 * To understand this concept, you must think of JavaScript functions as _values_; functions are objects. We know that they can take values as input and return a value as output. Thus, a higher-order function is one where either an input or output value is a function.  
-* 
+
+
+
+
 
 #### Creating and using private data
 
@@ -949,6 +973,299 @@ function makeList() {
 
 ##### Creating a Private Scope with an IIFE
 
+* Imagine that you need to add some code to a large and messy JavaScript program. (Yes, it's true. You will encounter messy code, and you need to learn how to work with it.) The program looks something like this:
+
+  ```javascript
+  // thousands of lines of messy JavaScript code!
+  
+  // here you need to define an object literal that creates a pet and logs the information
+  
+  // more messy JavaScript code
+  ```
+
+  This task seems simple, so let's take a stab at it:
+
+  ```javascript
+  // thousands of lines of messy JavaScript code!
+  
+  let myPet = {
+    type: 'Dog',
+    name: 'Spot',
+  };
+  
+  console.log(`I have pet ${myPet.type} named ${myPet.name}`);
+  
+  // more messy JavaScript code
+  ```
+
+  This code has a subtle problem. Can you see it?  
+
+  **Solution:** We don't know whether `myPet` is already in the global scope. If `myPet` already exists in the global scope, our definition will result in an error.  
+
+  Since functions create their own scopes, let's tryp putting the variable inside a function to hide it from the rest of the program:  
+
+  ```javascript
+  // thousands of lines of messy JavaScript code!
+  
+  function createAndLogPet() {
+    let myPet = {
+      type: 'Dog',
+      name: 'Spot',
+    };
+  
+    console.log(`I have pet ${myPet.type} named ${myPet.name}`);
+  }
+  
+  // more messy JavaScript code
+  ```
+
+  This function works. It isolates `myPet` from other declarations of `myPet` in the program, but it has a sublte problem of its own. Can you identify the problem?  
+
+  **Solution:** We don't know whether the program already contains a `createAndLogPet` function in the global scope. If there's a clash of function names, one will overwrite the other, and there will be trouble.  
+
+  We can solve this dilemma by turning the function declaration and invocation into an IIFE:  
+
+  ```javascript
+  // thousands of lines of messy JavaScript code!
+  (function() {
+    let myPet = {
+      type: 'Dog',
+      name: 'Spot',
+    };
+    
+    console.log(`I have pet ${myPet.type} named ${myPet.name}`);
+  })();
+  
+  // more messy JavaScript code
+  ```
+
+  This code works! It has a private scope for `myPet`, and it won't clash with any other functions.  
+
+  We can also pass values into the IIFE as arguments during invocation:  
+
+  ```javascript
+  // thousands of lines of messy JavaScript code!
+  
+  (function(type, name) {
+    let myPet = {
+      type,
+      name,
+    };
+    
+    console.log(`I have pet ${myPet.type} named ${myPet.name}`);
+  })('Dog', 'Spot');
+  
+  // more messy JavaScript code
+  ```
+
+##### Creating Private Data with an IIFE
+
+As we have seen earlier, we can create private data with closures. We could extend this concept and use it with an IIFE. With an IIFE we can make functions and objects that have access to private data.  
+
+###### Using an IIFE to Return a Function with Access to Private Data
+
+Let's say we want a function for generating unique numbers (i.e., unique id for students, employees, etc).  
+
+```javascript
+let studentId = 0;
+
+function generateStudentId() {
+  studentId += 1;
+  return studentId;
+}
+```
+
+This will work. However, it has the risk that `studentId` is reassigned unintentionally. When it's reassigned, there is no guarantee that `generateStudentId` will return unique student IDs.  
+
+An alternative is to have `generateStudentId` take an argument so that the user of the function has control. The challenge, though, is that the uniqueness of the student ID is now dependent on how well the user is able to keep track of the previously generated student IDs.  
+
+Finally, we can instead use an IIFE so that the `generateStudentId` function is responsible by itself for keeping track of the student IDs generated without exposing the IDs to being unintentionally reassigned.  
+
+```javascript
+let generateStudentId = (function() {
+  let studentId = 0;
+  
+  return function() {
+    studentId += 1;
+    return studentId;
+  };
+})();
+```
+
+###### Using an IIFE to Return an Object with Access to Private Data  
+
+For this use case, let's say that we have an `inventory` object that maintains a list of stock objects (name and quantity properties) and has a method that logs the stock count of each item. Here's an initial attempt at implementing this:  
+
+```javascript
+let inventory = {
+  stocks: [],
+  stockCounts() {
+    this.stocks.forEach(function(stock) {
+      console.log(stock.name + ': ' + String(stock.count));
+    });
+  },
+};
+```
+
+This implementation will work, however, it has limitations particularly when it comes to validating the stock objects that are added to the stocks list. For instance, it is common that stock items should be unique. In our scenario, we could take this to mean that the names of stock objects have to be unique. Here's an example run that demonstrates this limitation:  
+
+```javascript
+inventory.stocks.push({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+
+inventory.stocks.push({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+// ballpen: 5
+```
+
+Notice in the example run that the current implementation doesn't validate that the object we're adding to the list has a unique name.  
+
+As an improvement on this, we could add a method on the `inventory` object for adding a stock object so that it validates that the name is unique:
+
+```javascript
+let inventory = {
+  stocks: [],
+  stockCounts() {
+    this.stocks.forEach(function(stock) {
+      console.log(stock.name + ': ' + String(stock.count));
+    });
+  },
+  addStock(newStock) {
+    let isValid = this.stocks.every(function(stock) {
+      return newStock.name ! == stock.name;
+    });
+    
+    if (isValid) { this.stocks.push(newStock) };
+  },
+};
+```
+
+With the improved code, the `addStock` method now prevents the adding of stock objects when there is a current one with the same name already:  
+
+```javascript
+inventory.addStock({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+
+inventory.addStock({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+```
+
+This will work already. However, it doesn't prevent the user from intentionally or unintentionally adding a new stock object with the same name directly to the stock list:  
+
+```javascript
+// continuing from the previous sample run
+inventory.stocks.push({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+// ballpen: 5
+```
+
+In order to address this potential problem of adding directly to the stock list, we can make use of an IIFE to make the list private, and allow the adding of new stocks through the `addstock` method only:  
+
+```javascript
+let inventory = (function() {
+  let stocks = [];
+  
+  return {
+    stockCounts() {
+      stocks.forEach(function(stock) {
+        console.log(stock.name + ': ' + String(stock.count));
+      });
+    },
+    addStock(newStock) {
+      let isValid = stocks.every(function(stock) {
+        return newStock.name !== stock.name;
+      });
+      
+      if (isValid) { stocks.push(newStock) }
+    },
+  };
+})();
+```
+
+With this, the stocks list is private. Consequently, what is displayed by the `stockCounts` method will only be influenced by what is added through the `addStock` method.  
+
+```javascript
+inventory.addStock({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+
+inventory.addStock({
+  name: 'ballpen',
+  count: 5,
+});
+
+inventory.stockCounts();
+// logs:
+// ballpen: 5
+
+inventory.stocks.push({
+  name: 'ballpen',
+  count: 5,
+});
+// results in an error
+```
+
+As a final refactor, we can extract the function for validating that the new stock to be added has a unique name to a private function as well. This will clean up the `addStock` method and make the logic clearer to readers:  
+
+```javascript
+let inventory = (function() {
+  let stocks = [];
+  function isValid(newStock) {
+    return stocks.every(function(stock) {
+      return newStock.name !== stock.name;
+    });
+  }
+
+  return {
+    stockCounts() {
+      stocks.forEach(function(stock) {
+        console.log(stock.name + ': ' + String(stock.count));
+      });
+    },
+    addStock(newStock) {
+      if (isValid(newStock)) { stocks.push(newStock) }
+    },
+  };
+})();
+```
+
+
+
 
 
 #### Partial Function Application
@@ -1068,11 +1385,627 @@ function makeList() {
 
 #### Constructor functions
 
+##### Factory Functions
+
+* Using functions as object factories or, more succinctly, using factory functions (also called the "Factory Object Creation Pattern") provides us a way to create objects based on a pre-defined template:
+
+  ```javascript
+  function createPerson(firstName, lastName) {
+    let person = {};
+    person.firstName = firstName;
+    person.lastName = lastName || '';
+    person.fullName = function() {
+      return (this.firstName + ' ' + this.lastName).trim();
+    }
+    
+    return person;
+  }
+  
+  let john = createPerson('John', 'Doe');
+  let jane = createPerson('Jane');
+  
+  john.fullName();				// "John Doe"
+  jane.fullName();				// "Jane"
+  ```
+
+  We could also just return an object literal to write the function as:
+
+  ```javascript
+  function createPerson(firstName, lastName = '') {
+    return {
+      firstName,
+      lastName,
+      fullName() {
+        return (this.firstName + ' ' + this.lastName.trim());
+      },
+    };
+  }
+  ```
+
+* The factory function allows us to create same "type" of objecs easily with a pre-defined "template," however, it also has some disadvantages:
+
+  * Every object created with the factory function has a full copy of all the methods, which can be redundant.
+  * There isn't a way for us to inspect an object and know whether we created it from a factory function. This makes it difficult to identify whether an object is of a specific "type."
+
+##### Constructor Pattern
+
+* Factory functions have disadvantages when it comes to creating objects. In this assignment, we'll look at the constructor pattern.
+
+* Let's start by looking at the following code snippet to see how to use the constructor pattern to create objects:
+
+  ```javascript
+  // constructor function
+  function Person(firstName, lastName = '') {
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.fullName = function() {
+      return (this.firstName + ' ' + this.lastName).trim();
+    };
+  }
+  
+  let john = new Person('John', 'Doe');
+  let jane = new Person('Jane');
+  
+  john.fullName();							// "John Doe"
+  jane.fullName();							// "Jane"
+  
+  john.constructor;							// function Person(..)
+  jane.constructor;							// function Person(..)
+  
+  john instanceof Person;				// true
+  jane instanceof Person;				// true
+  ```
+
+  In this example, the `Person` function is a construtor function that we use to create objects. The reason that we say it's a constructor function is that **it's intended to be called with the `new` operator**; otherwise, it's just a regular JavaScript function. The fact that we capitalized the function's name is not a syntactical requirement, but a convention to reveal the intention that we should only use the function to construct objects.  
+
+* If we call a function without the `new` operator:
+
+  ```javascript
+  function Person(firstName, lastName = '') {
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.fullName = function() {
+      return (this.firstName + ' ' + this.lastName).trim();
+    };
+  }
+  
+  Person('John', 'Doe');
+  window.fullName(); 						// "John Doe"
+  ```
+
+  In this case, the `this` in the function points to the global object, and we've defined properties and functions on the global object itself!
+
+* When we call a function with the `new` operator, the following happens:
+
+  1. A new object is created.
+  2. `this` in the function is set to point to the new object.
+  3. The code in the function is executed.
+  4. `this` is returned if the constructor doesn't explicitly return an object.
+
+* ###### `this` is returned if the constructor doesn't explicitly return an object
+
+  It can be a subtle bug if you don't take note of the implication of not return an object. A typical scenario for this is when you have validation as part of the body of the constructor function. For instance, let us modify our `Person` constructor function to validate that a `lastName` is provided. If no `lastName` is provided, we will inform the user via the returned value.
+
+  ```javascript
+  function Person(firstName, lastName) {
+    if (!lastName) {
+      return 'Please provide a last name';
+    }
+    
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.fullName = function() {
+      return (this.firstName + ' ' + this.lastName).trim();
+    };
+  }
+  
+  let noLastName = new Person('John');
+  console.log(noLastName);		// logs an instance of a Person object
+  console.log(noLastName instanceof Person); // => true
+  ```
+
+  Notice in the above code that even though we exit from the function by returning a string on line 3, the value that the function returns is still an instance of the `Person` type created by the `Person` constructor. To change the value from an instance of the `Person` type, we have to return an object instead:
+
+  ```javascript
+  function Person(firstName, lastName) {
+    if (!lastName) {
+      return { invalidInput: 'Please provide a last name' };
+    }
+    
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.fullName = function() {
+      return (this.firstName + ' ' + this.lastName).trim();
+    };
+  }
+  
+  let noLastName = new Person('John');
+  console.log(noLastName);	 // => { invalidInput: 'Please provide a first name' };
+  console.log(noLastName instanceof Person); // => false
+  ```
+
+
+
+##### Function Prototypes and Object Prototypes
+
+* In JavaScript, every **function** has a special `prototype` property. It is assigned, by default, an object that instances created by the constructor function can delegate to. Note that this `prototype` property is only used when we use the function as a constructor, in which case all objects that it constructs will have this object set as their prototype. This is a mouthful, but it's easier to show this in code:  
+
+  ```javascript
+  let Foo = function() {};
+  let obj = Foo.prototype;
+  
+  let bar = new Foo();
+  let baz = new Foo();
+  
+  Object.getPrototypeOf(bar) === obj;  // true
+  Object.getPrototypeOf(baz) === obj;  // true
+  
+  bar.constructor === Foo;						 // true; bar is created from Foo
+  baz.constructor === Foo;						 // true; baz is created from Foo
+  bar instanceof Foo;									 // true; bar is an instance of Foo
+  baz instanceof Foo;									 // true; baz is an instance of Foo
+  ```
+
+  We can also represent the above code as a diagram. Visually, it is apparent that both objects (`bar` and `baz`) that we construct from `Foo` delegate to--or have their prototype object set to--the object assigned to the `prototype` property of `Foo`.
+
+  ![Delegation in action](https://d3905n0khyu9wc.cloudfront.net/images/constructor_prototypes_1.png)
+
+* To understand better how instances created by a constructor function point to the object assigned to its `prototype` property,  let's deconstruct what happens when we call a constructor function:
+
+  ```javascript
+  // The comments are added for illustration purposes only
+  function Foo(a, b) {
+    this.a = a;
+    this.b = b;
+  }
+  
+  // when Foo is called with new, as a constructor
+  function Foo(a, b) {
+    // this = new Object();												// a new object, or just {}
+    // Object.setPrototype(this, Foo.prototype);  // have the object inherit from Foo.prototype
+    
+    this.a = a;
+    this.b = b;
+    
+    // return this;											// return the created object
+  }
+  
+  // another way to write it, with Object.create()
+  function Foo(a, b) {
+    // this = Object.create(Foo.prototype);
+    
+    this.a = a;
+    this.b = b;
+    
+    // return this;										 // return the created object
+  }
+  ```
+
+  The key takeaway here is that every time we call a function as a constructor, JavaScript creates objects that are prototype linked to the object that is assigined to the `prototype` property (this happens via lines 10 and 20 above). With this understanding, we can use a constructor function and its `prototype` property to set up behavior delegation:  
+
+  ```javascript
+  let Dog = function() {};
+  
+  Dog.prototype.say = function() {
+    console.log(this.name + ' says Woof!');
+  }
+  
+  Dog.prototype.run = function() {
+    console.log(this.name + ' runs away.');
+  }
+  
+  let fido = new Dog();
+  fido.name = 'Fido';
+  fido.say();							// => Fido says Woof!
+  fido.run();							// => Fido runs away.
+  
+  let spot = new Dog();
+  spot.name = 'Spot';
+  spot.say();							// => Spot says Woof!
+  spot.run(); 						// => Spot runs away.
+  ```
+
+  This approach of defining shared behaviors on the constructor's `prototype` property is called the "Prototype Pattern" of object creation.
+
+##### Static Properties
+
+* **Static properties** are defined and accessed directly on the constructor, not on an instance or a prototype. Typically, static properties belong to the type (e.g., `Dog`) rather than to the individual instances or the prototype object.  
+
+* One common use of static properties is to keep track of all of the objects created by a constructor. For instance:
+
+  ```javascript
+  function Dog(name, breed, weight) {
+    this.name = name;
+    this.breed = breed;
+    this.weight = weight;
+    Dog.allDogs.push(this);
+  }
+  
+  Dog.allDogs = [];
+  ```
+
+  In this case, the static property `allDogs` contains an array with a reference to every `Dog` object created while the program is running. While `allDogs` maintains a list of all the dogs, it isn't information that is pertinent to a specific dog -- it's information about dogs in general. Therefore, it should be a static property.
+
+##### Static Methods
+
+* Static properties don't have to be ordinary data properties. You can also define static methods:
+
+  ```javascript
+  Dog.showSpecies = function() {
+    console.log(`Dogs belong to the species ${Dog.species}`);
+  }
+  ```
+
+  You've already seen examples of static methods on built-in JavaScript constructors. `Object.assign`, `Array.isArray`, and `Date.now` are all examples of static methods.
+
+* 
+
 #### Prototype objects
+
+##### Objects' Prototypes
+
+* Every JavaScript Object has a special hidden property called `[[Prototype]]`. We can retreive and set this property's value with the `Object.getPrototypeOf` and `Object.setPrototypeOf` methods. When we use `Object.create` to create an object, it sets the `[[Prototype]]` property of the created object to the passed-in object:
+
+  ```javascript
+  let foo = {};
+  let qux = Object.create(foo);
+  console.log(Object.getPrototypeOf(qux) === foo); // true 
+  ```
+
+  In this case, we say that the object assigned to `foo` is the **prototype object** of the object returned by `Object.create` and assigned to `qux`. We could also say that we created the object `qux` with object `foo` as its prototype.  
+
+  We can use `Object.prototype.isPrototypeOf` to determine whether an object has a given value for its `[[Prototype]]` property.
+
+  ```javascript
+  foo.isPrototypeOf(qux)			/// true
+  ```
+
+  Finally, we can use `Object.setPrototypeOf` to give the `[[Prototype]]` property a new value:
+
+  ```javascript
+  let foo = {};
+  let bar = {};
+  
+  let qux = Object.create(foo);
+  console.log(Object.getPrototypeOf(qux) === foo); // true
+  console.log(foo.isPrototypeOf(qux));						 // true
+  
+  Object.setPrototypeOf(qux, bar);
+  console.log(Object.getPrototypeOf(qux) === bar); // true
+  console.log(bar.isPrototypeOf(qux));						 // true
+  ```
+
+  Setting the `[[Prototype]]` of an object directly is a slow operation in Browsers and JavaScript engines. As such, it would be better to use `Object.create` than `Object.setPrototypeOf` to create an object with the desired `[[Prototype]]` property.  
+
+##### The `__proto__` Property
+
+* Many older JavaScript programs use a property named `__proto__`, which is pronounced **dunder prototype** instead of `Object.setPrototypeOf` and `Object.getPrototypeOf`. "dunder" is a shortened version of "double underscore", which alludes to teh double underscores at the beginning and end of the name. The `__proto__` property is a _deprecated_, non-hidden version of the `[[Prototype]]` property. As a rule, you should only use `__proto__` if you need to support very old browsers or old versions of Node, or as a convenient shortcut with temporary code or debugging operations. You may run into code that uses it, so you need to at least be aware of it.  
+
+##### Prototype Chain and the Object.prototype Object
+
+We can use `Object.create` to create objects that form a prototype chain:
+
+```javascript
+let foo = {
+  a: 1,
+  b: 2,
+};
+
+let bar = Object.create(foo);
+let baz = Object.create(bar);
+let qux = Object.create(baz);
+
+Object.getPrototypeOf(qux) === baz;					// true
+Object.getPrototypeOf(baz) === bar;					// true
+Object.getPrototypeOf(bar) === foo;					// true
+
+foo.isPrototypeOf(qux);											// true - because foo is on qux's prototype chain
+```
+
+The `Object.prototype` object is at the end of the prototype chain for all JavaScript objects. If you don't create an object from a prototype, its prototype is the `Object.prototype` object:
+
+```javascript
+let foo = {
+  a: 1,
+  b: 2,
+};																	// created with object literal
+
+Object.getPrototypeOf(foo) === Object.prototype;		// true
+```
 
 #### Behavior delegation
 
+* When we try to access a property or a method on an object, JavaScript searches not only in the object itself, but all the objects on its prototype chain, until the end is reached.
+
+##### Prototypal Inheritance and Behavior Delegation
+
+* JavaScript's prototype chain lookup for properties gives us the ability to store an object's data and behaviors not just in the object itself, but anywhere on its prototype chain. This is very powerful when we want to share data or behaviors.  
+
+  ```javascript
+  let dog = {
+    say() {
+      console.log(this.name + ' says Woof!');
+    },
+    
+    run() {
+      console.log(this.name + ' runs away.');
+    },
+  };
+  
+  let fido = Object.create(dog);
+  fido.name = 'Fido';
+  fido.say();							// => Fido says Woof!
+  fido.run();							// => Fido runs away.
+  
+  let spot = Object.create(dog);
+  spot.name = 'Spot';
+  spot.say();							// => Spot says Woof!
+  spot.run();							// => Spot runs away.
+  ```
+
+  We may have thousands (or more!) of dogs in our program, but instead of defining the `say` and `run` methods on every object, we defined those methods on `dog`, the prototype object of all dogs. This gives us several advantages:
+
+  * We can create dogs much more easily with the `dog` prototype, and don't have to duplicate `say` and `run` on every single dog object.
+  * If we need to add/remove/update behavior to apply to all dogs, we can just modify the prototype object, and all dogs will pick up the changed behavior automatically.
+
+* Some people call this pattern JavaScript's **Prototypal Inheritance**. The word "inheritance" comes from the classical object oriented programming languages (Java, C++, Ruby, Python, etc.) where classes are used to create objects with a carefully designed hierarchy for the purpose of behavior sharing. JavaScript doesn't have true classes, but in a true object oriented (as opposed to "class oriented") way, objects can be created directly from other objects and behaviors (methods) can be shared via the prototype chain.  
+
+* From a top down / design time point of view, the objects on the bottom of the prototype chain "inherited" the properties and behaviors of all the upstream objects on the prototype chain; from a bottom up / run time point of view, objects on the bottom of the prototype chain can "delegate" requests to the upstream objects to be handled. Hence this design pattern is also called **Behavior Delegation**.
+
+* **Overriding default behavior**: objects created from prototypes can override shared behaviors by defining the same methods locally.
+
+* With behavior delegation, using `obj.prop !== undefined` is no longer a reliable way to test if a property is defined on an object--that expression returns true as long as `prop` is defined anywhere on the object's prototype chain. JavaScript gives you the following two methods to check an object's own property:
+
+  * The `hasOwnProperty` method on an object tests if a property is defined on the object itself.
+  * The `Object.getOwnPropertyNames` method returns an array of an object's own property names.
+
+##### Methods on Object.prototype
+
+* The `Object.prototype` object is on the top of all JavaScript objects' prototype chain, therefore the methods defined there can be called from any JavaScript object. Here are 3 useful ones:
+  * `Object.prototype.toString()`: returns a string representation of the object
+  * `Object.prototype.isPrototypeOf(obj)`: tests if the object is in another object's prototype chain
+  * `Object.prototype.hasOwnProperty(prop)`: tests whether the property is defined on the object itself
+
+##### Method Delegation to Prototypes
+
+* Delegation means that we can share methods by putting them in the prototype object; if an object doesn't contain a requested method, JavaScript searches the prototype chain to find the method.  
+
+* Thus, we can define a method once in the prototype object, and let the inheriting objects delegate the method calls to the prototype. We can use the prototypes in conjunction with constructors to achieve the same result:
+
+  ```javascript
+  let DogPrototype = {
+    bark() {
+      console.log(this.weight > 20 ? 'Woof!' : 'Yip!');
+    }
+  };
+  
+  function Dog(name, breed, weight) {
+    Object.setPrototypeOf(this, DogPrototype);
+    this.name = name;
+    this.breed = breed;
+    this.weight = weight;
+    // this.bark method removed
+  }
+  ```
+
+  In this code, we've changed our `Dog` constructor and created a `DogPrototype` object. The first thing we do inside the constructor is set `DogPrototype` as the prototype of the newly created `Dog` object. We then assign the arguments to the properties.  
+
+  This time, however, the `bark` method isn't defined on the individual objects, but is, instead, defined on the `[[Prototype]]` property.  
+
+  The `DogPrototype` object has the only copy of the method; all `Dog` objects delegate `bark` to the `DogPrototype` object. If you have dozens of `Dog` objects in your program, it's easy to see that adding prototypes into the mix can make better use of memory.  
+
+  Okay, we now have a constructor and a related prototype object. Together, they construct objects of some type. In our code here, we can guess that the constructor and prototype are related by looking at their names. However, it would be better if we could establish that relationship more concretely. Let's assign the prototype object to a property of the `Dog` function.  
+
+  ```javascript
+  // Delete DogPrototype
+  
+  function Dog(name, breed, weight) {
+    Object.setPrototypeOf(this, Dog.myPrototype);
+    // rest of the code
+  }
+  
+  Dog.myPrototype = {
+    bark() {
+      console.log(this.weight > 20 ? 'Woof!' : 'Yip!');
+    }
+  };
+  ```
+
+  Since JavaScript functions are objects, we can add properties to them. Here, we assign the prototype object to a `myPrototype` property on the `Dog` function object. Thus, we clearly show our intent that all dogs inherit from the `Dog.myPrototype` object. Once we've done that, we can change our constructor function to use `Dog.myPrototype` as the prototype object.  
+
+##### The Constructor `prototype` Property
+
+* So far, so good. We have a constructor function and a prototype object that work together. Between them, they create `Dog` objects for us that don't waste memory with multiple copies of methods. However, we still haven't explained why we should bother with constructors. We can pair a prototype with a factory function and get the same effect.  
+
+* What makes constructors special is a characteristic of all function objects in JavaScript: they all have a `prototype` property that we call the **function prototype** to distinguish them from the prototypes used when creating ordinary objects. The code we showed in the previous section emulates something that JavaScript bundles with constructors. Let's take a look at that property:
+
+  ```javascript
+  Dog.prototype; // => Dog {}
+  ```
+
+* When you call a function `Foo` with the `new` keyword, JavaScript sets the new object's prototype to the current value of `Foo`'s `prototype` property. That is, the constructor creates an object that inherits from the constructor function's prototype. Since inheritance in JavaScript uses prototypes, we can also say that the constructor creates an object with a prototype that is the same as the constructor function's prototype.  
+
+* The terminology of constructor prototypes and object prototypes is extremely confusing. Note in particular that we use the term "prototype" to refer to 2 distinct but related concepts:
+
+  * If `bar` is an object, then the object from which `bar` inherits is the **object prototype**. By default, constructor functions set the object prototype for the objects they create to the constructor's prototype object.
+  * The **constructor's prototype object**, also called the **function prototype**, is an object that the constructor uses as the object prototype for the objects it creates. In other words, each object that the constructor creates inherits from the constructor's prototype object. JavaScript stores the constructor's prototype object in the constructor's `prototype` property; that is, if the constructor's name is `Foo`, then `Foo.prototype` references the constructor's prototype object.  
+
+* In most cases when we talk about a **prototype** without being more explicit, we mean an **object prototype**. We'll talk about the constructor's prototype, the function prototype, or the `prototype` property when talking about a constructor's prototype object.  
+
+* Note that constructors don't inherit from the constructor's prototype object. Instead, the objects that the constructor creates inherit from it.  
+
+* As we've said before, every JavaScript function has a `prototype` property. However, JavaScript only uses it when you call that function as a constructor, that is, by using the `new` keyword. With this information, we can abandon our home-grown constructor-prototype pairing and use the one that JavaScript provides instead:
+
+  ```javascript
+  function Dog(name, breed, weight) {
+    // deleted Object.setPrototype(this, Dog.myPrototype);
+    this.name = name;
+    this.breed = breed;
+    this.weight = weight;
+  }
+  
+  Dog.prototype.bark = function() {
+    console.log(this.weight > 20 ? 'Woof!' : 'Yip!');
+  };
+  
+  let maxi = new Dog('Maxi', 'German Sheperd', 32);
+  maxi.bark(); // 'Woof!'
+  
+  let biggie = new Dog('Biggie', 'Whippet', 9);
+  biggie.bark();  // 'Yip!'
+  ```
+
+  Here's a diagram illustrating the `prototype` and `constructor` links we've discussed.
+
+  ![Diagram](https://dbdwvr6p7sskw.cloudfront.net/images/js120/constructor-prototype-map.png)
+
+  
+
+  Note that our constructor doesn't have to explicitly set the prototype of `this` to `Dog.prototype`. JavaScript does that for us when we call the function with `new`. We glossed over this detail earlier, so let's restate those steps with updated information. We'll assume that the constructor function is named `Foo`:
+
+  1. It creates an entirely new object.
+  2. It sets `Foo.prototype` as the prototype for the new object. That is, the new object inherits from the object referenced by `Foo.prototype`.  
+  3. It sets the execution context (`this`) for the function to point to the new object.
+  4. It invokes the function.
+  5. It returns the new object unless the function returns another **object**.
+
+* 
+
 #### OLOO and Pseudo-Classical patterns
+
+* Before we get into the two object creation patterns, let's use an example to see the typical considerations we face when we need to create similar objects. For example, we may have the object `pointA` to represent a point in the coordinate plane, who also knows how to calculate its distance to the origin, and whether it's on the X or the Y axis:
+
+  ```javascript
+  let pointA = {
+    x: 30,
+    y: 40,
+  
+  	onXAxis() {
+    	return this.y === 0;
+  	},
+    
+    onYAxis() {
+      return this.x === 0;
+    },
+    
+    distanceToOrigin() {
+      return Math.sqrt((this.x * this.x) + (this.y * this.y));
+    },
+  };
+  
+  pointA.distanceToOrigin();				// 50
+  pointA.onXAxis(); 								// false
+  pointA.onYAxis();									// false
+  ```
+
+  Use of the object literal form is great if all we need is one object. When we need to have many points in our program, we'd like our points to:
+
+  * Be able to have their own **states**, represented by the x and y values;
+  * Share the `distanceToOrigin`, `onXAxis` and `onYAxis` **behaviors**, because they work the same way for all points on the coordinate plane.
+
+##### The Pseudo-classical Pattern
+
+* The Pseudo-classical pattern is a combination of the constructor pattern and the prototype pattern. With this pattern, we use a constructor to set object states, and put shared methods on the constructor function's prototype:
+
+  ```javascript
+  let Point = function(x = 0, y = 0) {			// capitalized constructor name as a convention
+    this.x = x;															// initialize states with arguments
+    this.y = y;															// 0 as default value
+  };
+  
+  Point.prototype.onXAxis = function() { // shared behaviors added to constructor's prototype property
+  	return this.y === 0;
+  };
+  
+  Point.prototype.onYAxis = function() { // these methods are added one by one
+    return this.x === 0;
+  };
+  
+  Point.prototype.distanceToOrigin = function() {
+    return Math.sqrt((this.x * this.x) + (this.y * this.y));
+  };
+  
+  let pointA = new Point(30, 40);						// use new to create objects
+  let pointB = new Point(20);
+  
+  pointA instanceof Point;									// use instanceof to check type
+  pointB instanceof Point;
+  ```
+
+##### The OLOO Pattern
+
+* OLOO, which stands for "Object Linking to Other Objects," was first popularized by Kyle Simpson. JavaScript sheds its pretense as a "class oriented" language, where it uses constructor functions as fake classes. Instead, it embraces its prototype based object model.
+
+* With the OLOO pattern, we define the shared beahviors on a prototype object, then use `Object.create` to create objects that delegate directly from that object, without going through the roundabout way that involves "constructors and their properties."
+
+  ```javascript
+  let Point = {							// capitalized name for the prototype as a convention
+    onXAxis() {							// shared methods defined on the prototype
+      return this.y === 0;
+    },
+    
+    onYAxis() {
+      return this.x === 0;
+    },
+    
+    distanceToOrigin() {
+      return Math.sqrt((this.x * this.x) + (this.y * this.y));
+    },
+    
+    init(x, y) {						// optional init method to set states
+      this.x = x;
+      this.y = y;
+      return this;
+    },
+  };
+  
+  let pointA = Object.create(Point).init(30, 40);
+  
+  Point.isPrototypeOf(pointA);				// use isPrototypeOf to check type
+  Point.isPrototypeOF(pointA);
+  
+  pointA.distanceToOrigin();					// 50
+  pointA.onXAxis();										// false
+  ```
+
+  Note that this form OLOO requires you to call the `init` method after creating the new object. If you don't call `init`, the various properties may not be assigned to usable values.  
+
+  If you want, you can provide default values so you don't need to call `init`:  
+
+  ```javascript
+  let Point = {             // capitalized name for the prototype as a convntion
+    x: 0,
+    y: 0,
+  
+    onXAxis() {             // shared methods defined on the prototype
+      return this.y === 0;
+    },
+  
+    onYAxis() {
+      return this.x === 0;
+    },
+  
+    distanceToOrigin() {
+      return Math.sqrt((this.x * this.x) + (this.y * this.y));
+    },
+  
+    init(x, y) {            // optional init method to set states
+      this.x = x;
+      this.y = y;
+      return this;
+    },
+  };
+  
+  let pointB = Object.create(Point);
+  
+  Point.isPrototypeOf(pointB);
+  pointB.distanceToOrigin();          // 0
+  pointB.onXAxis();                   // true
+  ```
+
+  
+
+* 
 
 #### `class` syntax
 
