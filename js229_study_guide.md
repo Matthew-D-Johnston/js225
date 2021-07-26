@@ -1638,6 +1638,8 @@ let inventory = (function() {
 
   You've already seen examples of static methods on built-in JavaScript constructors. `Object.assign`, `Array.isArray`, and `Date.now` are all examples of static methods.
 
+* You may sometimes here such methods described as _class methods_. However, in JavaScript, that's a bit of a misnomer. Instead, you should call such methods **static methods**.
+
 * 
 
 #### Prototype objects
@@ -1676,6 +1678,15 @@ let inventory = (function() {
   ```
 
   Setting the `[[Prototype]]` of an object directly is a slow operation in Browsers and JavaScript engines. As such, it would be better to use `Object.create` than `Object.setPrototypeOf` to create an object with the desired `[[Prototype]]` property.  
+  
+* Every object has a `[[Prototype]]` property that points to a special object, the object's prototype, which is used to lookup properties that don't exist on the object itself.
+
+  * `Object.create` returns a new object with the argument object as its prototype.
+  * `Object.getPrototypeOf` can be used to retrieve the prototype object for an object.
+  * `Object.setPrototypeOf` can be used to replace an object's prototype object with another object.
+  * `obj.isPrototypeOf` can be used to check for prototype relationships between objects.
+
+* 
 
 ##### The `__proto__` Property
 
@@ -1712,6 +1723,105 @@ let foo = {
 
 Object.getPrototypeOf(foo) === Object.prototype;		// true
 ```
+
+##### More Methods on the Object Constructor
+
+* We'd like to highlight a fe more methods on the `Object` constructor.
+
+###### Object.create and Object.getPrototypeOf
+
+* The `getPrototypeOf` method on `Object` is used to return the prototype object of an object that is passed in. When we combine it with `Object.create` we can create a prototype chain that mimics classical inheritance.
+
+* Let's study the following code:
+
+  ```javascript
+  Object.getPrototypeOf([]) === Array.prototype; 			// true
+  
+  function NewArray() {}
+  NewArray.prototype = Object.create(Object.getPrototypeOf([]));
+  ```
+
+  The empty array is an object whose prototype object is the `Array.prototype` object. Then we create a function and use `Object.create` to have the `NewArray.prototype` object inherit from `Array.prototype`.  
+
+  ```javascript
+  NewArray.prototype.first = function() {
+    return this[0];
+  };
+  ```
+
+  Next we add a method on `NewArray.prototype`. `NewArray.prototype` can now delegate all the Array methods to `Array.prototype`, and it has the special ability to respond to `first` and return the first element in the array.
+
+  ```javascript
+  let newArr = new NewArray();
+  let oldArr = new Array();
+  
+  oldArr.push(5);
+  newArr.push(5);
+  oldArr.push(2);
+  newArr.push(2);
+  console.log(newArr.first());					// => 5
+  console.log(oldArr.first);						// => undefined
+  ```
+
+###### Object.defineProperties
+
+* We want to have an object constructor that returns a new object with a log function that cannot be modified. In a normal constructor this is not possible. However, using the `defineProperties` method on `Object` we can provide properties and values and set whether each property can be changed or not. Here is an example of creating a property on an object that is read-only.  
+
+  ```javascript
+  let obj = {
+    name: 'Obj',
+  };
+  
+  Object.defineProperties(obj, {
+    age: {
+      value: 30,
+      writable: false,
+    },
+  });
+  
+  console.log(obj.age); // => 30
+  obj.age = 32;					// throws an error in strict mode
+  console.log(obj.age); // => 30
+  ```
+
+###### Object.freeze
+
+* If we wanted to have an object with properties that are immutable, or not able to be changed, we can use the `Object.freeze` method to prevent anything from being changed about an object. This prevents any property values that are not objects from being changed or deleted.
+
+  ```javascript
+  let frozen = {
+    integer: 4,
+    string: 'String',
+    array: [1, 2, 3],
+    object: {
+      foo: 'bar'
+    },
+    func() {
+      console.log('I\'m frozen');
+    },
+  };
+  
+  Object.freeze(frozen);
+  frozen.integer = 8;
+  frozen.string = 'Number';
+  frozen.array.pop();
+  frozen.object.foo = 'baz';
+  frozen.func = function() {
+    console.log('I\'m not really frozen');
+  };
+  
+  console.log(frozen.integer); 			// => 4
+  console.log(frozen.string);				// => String
+  console.log(frozen.array);				// => [1, 2]
+  console.log(frozen.object.foo);		// => baz
+  frozen.func();										// I'm frozen
+  ```
+
+   Can you explain why the array and object properties are changed, but the method is not?  
+
+  **Solution:** For property values that are objects, the references to the objects are frozen. This means that you can't point to other objects, but you can still use the frozen references to mutate the objects.
+
+* Keep in mind that if you freeze an object, it cannot be unfrozen.
 
 #### Behavior delegation
 
@@ -1758,6 +1868,11 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
 
   * The `hasOwnProperty` method on an object tests if a property is defined on the object itself.
   * The `Object.getOwnPropertyNames` method returns an array of an object's own property names.
+  
+* The prototype chain property lookup is the basis for "prototypal inheritance", or property sharing through the prototype chain. Downstream objects "inherit" properties and behaviors from upstream objects, or, put differently, downstream objects can "delegate" properties or behaviors upstream.  
+
+  * A downstream object **overrides** an inherited property if it has a same-named property on itself. (Overriding is similar to shadowing, but it doesn't completely hide the overriden properties.)
+  * `Object.getOwnPropertyNames` and `obj.hasOwnProperty` can be used to test whether a given property is owned by an object.
 
 ##### Methods on Object.prototype
 
@@ -2008,6 +2123,275 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
 * 
 
 #### `class` syntax
+
+* ES6 has introduced `class` as another way to create objects as well as establish inheritance. The usage of `class` in JavaScript though is quite misleading as the language doesn't really have true classes. As you know by now, JavaScript implements object-oriented features through prototypes.  
+
+* What is `class`? Simply, it is just syntactic sugar that wraps around one of the object creation patterns we have already discussed -- pseudo-classical pattern. In other words, it is just another way to write code.  
+
+* Recall the pseudo-classical example in the previous assignment.
+
+  ```javascript
+  function Point(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+  };
+  
+  Point.prototype.onXAxis = function() {
+    return this.y === 0;
+  };
+  
+  Point.prototype.onYAxis = function() {
+    return this.x === 0;
+  };
+  
+  Point.prototype.distanceToOrigin = function() {
+    return Math.sqrt((this.x * this.x) + (this.y * this.y));
+  }
+  ```
+
+  Lines 1 to 4 defines the `Point` constructor function, while lines 6 to 16 define methods on `Point.prototype`. No surprises here. How then do we "translate" this same code and functionality in the form of the `class` syntactic sugar? 
+
+  ```javascript
+  class Point {
+    constructor(x = 0, y = 0) {
+      this.x = x;
+      this.y = y;
+    }
+    
+    onXAxis() {
+      return this.y === 0;
+    }
+    
+    onYAxis() {
+      return this.x === 0;
+    }
+    
+    distanceToOrigin() {
+      return Math.sqrt((this.x * this.x) + (this.y * this.y));
+    }
+  }
+  ```
+
+* Though they may look different, both programs functionally do the exact same thing. You can check out the image below to see them side-by-side.
+
+  ![img](https://d3905n0khyu9wc.cloudfront.net/images/class_vs_pseudo_classical.png)
+
+* Syntactically, there are three main differences here:
+
+  1. The obvious one is the use of the keyword `class` instead of `function`.
+  2. Parameters are defined and states are set within the `constructor` function, which automatically runs whenever an object is created.
+  3. All methods defined within the `class` definition, with the exception of `constructor`, are defined on the prototype object. In this case, on `Point.prototype`.
+
+* How about instantiating objects? We do that exactly the same way that we create objects with constructor functions.  
+
+  ```javascript
+  class Point {
+    constructor(x = 0, y = 0) {
+      this.x = x;
+      this.y = y;
+    }
+    
+    // rest of the code
+  }
+  
+  let pointA = new Point(30, 40);
+  let pointB = new Point(20);
+  
+  pointA instanceof Point;							// true
+  pointB instanceof Point;							// true
+  
+  pointA.distanceToOrigin();						// 50
+  pointB.onXAxis();											// true
+  ```
+
+##### A Couple of Caveats
+
+* There is nothing special with the `class` "method" of object creation. Again, it is merely syntactic sugar. However, there are things we need to take note of.
+
+  1. All code in `class` executes in strict mode.
+
+  2. Unlike function declarations, class declarations are not hoisted.
+
+     ```javascript
+     let pointA = new Point(30, 40);						// ReferenceError: Point is not defined
+     
+     class Point {
+       constructor(x = 0, y = 0) {
+         this.x = x;
+         this.y = y;
+       }
+       
+     // rest of the code
+     }
+     ```
+
+  3. Invoking the class constructor without the `new` keyword raises an error.  
+
+     ```javascript
+     class Point {
+       constructor(x = 0, y = 0) {
+         this.x = x;
+         this.y = y;
+       }
+       
+     // other code
+     }
+     
+     let pointA = Point(30, 40);					// TypeError: Class constructor Point cannot be
+     																		// invoked without 'new'
+     ```
+
+##### Static Methods using `class` syntax
+
+* It should come as no surprise that you can defined static methods with the `class` keyword as well: just use the `static` keyword:
+
+  ```javascript
+  class Rectangle {
+    constructor(length, width) {
+      this.length = length;
+      this.width = width;
+    }
+    
+    static getDescription() {
+      return 'A rectangle is a shape with 4 sides';
+    }
+    
+    getArea() {
+      return this.length * this.width;
+    }
+  }
+  
+  console.log(Rectangle.getDescription()); // A rectangle is a shape with 4 sides
+  ```
+
+* You can also define static properties. Static properties are properties that are defined on the constructor function instead of the individual objects. One well-known example of a static property is the `length` property used by the `String` type. To define a static property with the constructor and prototype pattern, just add it to the constructor function object:
+
+  ```javascript
+  Rectangle.description = 'A rectangle is a shape with 4 sides';
+  ```
+
+  To do the same with a `class`, just use the `static` keyword inside the `class`:
+
+  ```javascript
+  class Rectangle {
+    static description = 'A rectangle is a shape with 4 sides';
+  }
+  ```
+
+##### Inheritance With Class Declarations
+
+* In a prior assignment, we learned how one consructor's prototype can inherit from another constructor's prototype. For example:
+
+  ```javascript
+  function Rectangle(length, width) {
+    this.length = length;
+    this.width = width;
+  }
+  
+  Rectangle.prototype.getArea = function() {
+    return this.length * this.width;
+  };
+  
+  Rectangle.prototype.toString = function() {
+    return this.length * this.width;
+  };
+  
+  Rectangle.prototype.toString = function() {
+    return `[Rectangle ${this.length} x ${this.width}]`;
+  };
+  
+  function Square(size) {
+    Rectangle.call(this, size, size);
+  }
+  
+  Square.prototype = Object.create(Rectangle.prototype);
+  Square.prototype.constructor = Square;
+  
+  Square.prototype.toString = function() {
+    return `[Square ${this.length} x ${this.width}]`;
+  };
+  ```
+
+  Let's convert that code to use classes instead of constructors and prototypes. The `Square` consructor's prototype inherits from `Rectangle.prototype`, which gives square objects access to methods defined for rectangle objects. We can do the same thing with classes, but we now use the clean, straightforward syntax provided for JavaScript classes:
+
+  ````javascript
+  class Rectangle {
+    constructor(length, width) {
+      this.length = length;
+      this.width = width;
+    }
+    
+    getArea() {
+      return this.length * this.width;
+    }
+    
+    toString() {
+      return `[Rectangle ${this.width * this.length}]`;
+    }
+  }
+  
+  class Square extends Rectangle {
+    constructor(size) {
+      super(size, size);
+    }
+    
+    toString() {
+      return `[Square] ${this.width * this.length}`;
+    }
+  }
+  ````
+
+  The `extends` keyword signifies that the class named to the left of `extends` should inherit from the class specified to the right of `extends`. Note that we don't define `getArea` on the `Square` class since `Square` inherits it from `Rectangle` and doesn't need to customize or override the method.
+
+##### `super`
+
+* Note also that the `Square` consructor calls a function that is represented by the keyword `super`. When called inside the `constructor` method, the `super` keyword refers to the constructor method for the parent class (the class that we inherit from). Thus, `super(size, size)` performs the same role performed by this code from our constructor/prototype example:
+
+  ```javascript
+  function Square() {
+    Rectangle.call(this, size, size);
+  }
+  ```
+
+  You don't need to use `super` in every subclass, but in most cases you do. In particular, if the superclass's constructor creates any object properties, you must call `super` to ensure that those properties are set properly. For instance, in the `Rectangle` class above, we create two properties in the `Rectangle` constructor, so we must call `super` in `Square`'s constructor.
+
+* If you do call `super` in a subclass's constructor, you must call it before you use `this` in that constructor.
+
+##### Inheritance With Class Expressions
+
+* Let's look at another example of inheritance with classes:
+
+  ```javascript
+  let Person = class {
+    constructor(name, age) {
+      this.name = name;
+      this.age = age;
+    }
+    
+    sayName() {
+      console.log(`My name is ${this.name}.`);
+    }
+  };
+  
+  let Student = class extends Person {
+    constructor(name, age, semester) {
+      super(name, age);
+      this.semester = semester;
+    }
+    
+    enrollInCourse(courseNumber) {
+      console.log(`${this.name} has enrolled in course ${courseNumber}.`);
+    }
+  };
+  
+  let student = new Student('Kim', 22, 'Fall');
+  student.sayName();	// logs 'My name is Kim.'
+  student.enrollInCourse('JS120');  // logs 'Kim has enrolled in course JS120.'
+  ```
+
+  In this example, the `Student` class inherits from the `Person` class. That gives student objects access to methods of the `Person` class and extends person objects further by adding a `semester` property and an `enrollInCourse` method. Notice that we've reused `Person`'s constructor inside the `Student` constructor, and calling `super` with `name` and `age` since the `Student` constructor expects those arguments. We also assign the `semester` argument to the `semester` property after `super` returns.
+
+* Note that this most recent example uses class expressions instead of class declarations.
 
 ---
 
