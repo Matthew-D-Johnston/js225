@@ -24,7 +24,7 @@ You should be able to clearly explain and apply the following concepts:
 * Objects can use their properties to define state and behavior.
 * Objects:
   - organize related data and code together.
-  - are useful whe a program needs more than one instance of something.
+  - are useful when a program needs more than one instance of something.
   - become more useful as the codebase size increases.
 
 ##### Object Oriented Programming
@@ -33,7 +33,7 @@ You should be able to clearly explain and apply the following concepts:
 * The object-oriented approach to programming puts data and procedures that manipulate that data into containers for that data (i.e. objects). 
 * We no longer deal solely with primitives, or composites of primitives, but "smart" objects that can perform actions on the data they own.
 * This allows us to move complexity inside objects instead of exposing it globally.
-* We can strict needed changes to specific objects that don't ripple throughout the entire project.
+* We can restrict needed changes to specific objects that don't ripple throughout the entire project.
 * Maintenance is easier when we can limit the scope of changes.
 
 #### Object factories
@@ -84,7 +84,6 @@ You should be able to clearly explain and apply the following concepts:
 * Implicit function execution context (also called implicit binding for functions): this is an execution context that JavaScript "implicitly" sets. It is the context for a function that you invoke without supplying an explicit context. JavaScript binds such functions to the global object.
 * Implicit _method_ execution context is the execution context for any method (i.e., function referenced as an object property) invoked without an explicit context provided. JavaScript implicitly binds methods invoked in this manner to the calling object.
 * Function invocations (e.g., `parseInt(numberString)`) rely upon implicit execution context that resolves to the global object. Method invocations (e.g., `array.forEach(processElement)`) rely upon implicit context that resolves to the object that holds the method.  
-* 
 
 ##### Global Object as Implicit Context
 
@@ -97,7 +96,7 @@ You should be able to clearly explain and apply the following concepts:
   foo;								// 1
   ```
 
-  In the code above, the first line doesn't declare a global variable since it doesn't use the `let`, `var`, or `const` keyword. It works, though, since JavaScript gives `foo` an implicit evaluation context: the global object. Thus, the first line is the ssame as `window.foo = 1` (or `global.foo = 1`), which assigns the property `foo` on the global object with a value of `1`.
+  In the code above, the first line doesn't declare a global variable since it doesn't use the `let`, `var`, or `const` keyword. It works, though, since JavaScript gives `foo` an implicit evaluation context: the global object. Thus, the first line is the same as `window.foo = 1` (or `global.foo = 1`), which assigns the property `foo` on the global object with a value of `1`.
 
 - When we declare **global** variables with `var` or functions, JavaScript adds them to the global object as properties. You can verify this by examining the `window` object.
 
@@ -183,7 +182,7 @@ Let's look at some solutions to this problem:
 
 ###### Solution 1: Preserve Context with a Local Variable in the Lexical Scope
 
-One common approach is the `let self = this` or `let that = this` fix. You save `this` in a variable named `self` or `that`	 before calling the function, then reference the variable in the function.  
+One common approach is the `let self = this` or `let that = this` fix. You save `this` in a variable named `self` or `that` before calling the function, then reference the variable in the function.  
 
 ```javascript
 let obj = {
@@ -398,7 +397,7 @@ obj.foo();
 
 ###### Solution 4: Use arrow function for the callback  
 
-Arrow functions do not have a `this` binding. Instead of `this` being dependent on the location of the function invocation, JavaScript resolves it by looking at teh enclosing scopes.  
+Arrow functions do not have a `this` binding. Instead of `this` being dependent on the location of the function invocation, JavaScript resolves it by looking at the enclosing scopes.  
 
 ```javascript
 let obj = {
@@ -486,7 +485,7 @@ obj.foo();
 
 ##### Function Scope
 
-* Variables declared inside a scope have function scope, and they cannot be accessed outside the body of the function.
+* Variables declared inside a function have function scope, and they cannot be accessed outside the body of the function.
 * Function scopes nest inside each other. The code within an inner scope can access any variables in the same scope or **any surrounding scope**. This works no matter how deeply nested a function is.
 * Both function and block scopes are also called local scopes.
 
@@ -510,8 +509,6 @@ obj.foo();
 
 * **Higher-order functions** can accept a function as an argument, return a function when invoked, or both. In other words, higher-order functions work with other functions.
 * To understand this concept, you must think of JavaScript functions as _values_; functions are objects. We know that they can take values as input and return a value as output. Thus, a higher-order function is one where either an input or output value is a function.  
-
-
 
 
 
@@ -831,7 +828,8 @@ function makeList() {
     };														// runtime automatically allocates the memory.
     
     console.log(name.firstName);  // Do something with name
-  }																// Returns the `name` object to caller
+  	return name;                  // Returns the `name` object to caller
+  }
   
   let loggedName = logName()			// loggedName variable is assigned the value stored in
   																// name, which is a reference to the object literal
@@ -845,7 +843,7 @@ function makeList() {
 
 * Most programming languages divide memory into two principal regions: the stack and the heap. JavaScript stores most primitive values as well as references on the stack, and everything else on the heap. You can think of references as pointers to the actual value of an object, array, or string that lives in the heap.
 * The stack doesn't participate in garbage collection. That means that **most primitive values don't get involved in garbage collection**; the main exceptions are strings and bigints.
-* When a function or block begins executing in a JavaScript program, JavaScript allocates memory on the stack for the variables defined in that block or function. Since each item has fixed size, JavaScript can calculate the amount of memory it needs during the creation phase of execution without knowing the specific values. That means it can determine how much stack space it needs when hoisting occurs. When the block or function is done running, the allocated stack memory gets return to teh system automatically. This process is somewhat similar to garbage collection, but it is considered distinct.  
+* When a function or block begins executing in a JavaScript program, JavaScript allocates memory on the stack for the variables defined in that block or function. Since each item has fixed size, JavaScript can calculate the amount of memory it needs during the creation phase of execution without knowing the specific values. That means it can determine how much stack space it needs when hoisting occurs. When the block or function is done running, the allocated stack memory gets returned to the system automatically. This process is somewhat similar to garbage collection, but it is considered distinct.  
 * The situation is more complicated when closures include variables that have primitive values. Since closures may need to track these variables and their values after the current stack frame is destroyed, they must be stored someplace other than the stack. You can think of these primitive values as being stored on the heap, which makes them subject to garbage collection.
 * The heap is much trickier to deal with since each value has a different size that can't be determined ahead of time. Instead, new values must be added to the heap when they get created. Since the program can retain references to the values on the heap, it can't use the same allocate and release scheme used with the stack. Instead, it needs to rely on garbage collection to detect when a value's reference count reaches 0.
 * Garbage collection can occur at any time; it often ocurrs at periodic intervals during a program's lifetime. In particular, the programmer usually has no control over when GC occurs. It used to be possible to trigger garbage collection in JavaScript, but that is no longer possible in modern versions of JavaScript.
@@ -912,7 +910,7 @@ function makeList() {
   helloSteve();				// => Hello, Steve!
   ```
 
-  Before JavaScript can garbage collect `"Steve"`, you must ensure that nothing else in the program references `"Steve"`; that includes every closure that has access to teh `"Steve"` string. That's not typically a concern, but if you find that you must remove a closure or other reference explicitly, you can assign `null` to the item that references it. For instance:  
+  Before JavaScript can garbage collect `"Steve"`, you must ensure that nothing else in the program references `"Steve"`; that includes every closure that has access to the `"Steve"` string. That's not typically a concern, but if you find that you must remove a closure or other reference explicitly, you can assign `null` to the item that references it. For instance:  
 
   ```javascript
   helloSteve = null;
@@ -942,7 +940,7 @@ function makeList() {
   ```javascript
   (function() {
     console.log('hello');
-  })();											// => hello
+  })();										// => hello
   ```
 
   This syntax adds a pair of parentheses around the function expression, and the parentheses at the end invoke the function. The extra parentheses around the function expression are important--without them, we can't invoke the function right away.
@@ -1002,7 +1000,7 @@ function makeList() {
 
   **Solution:** We don't know whether `myPet` is already in the global scope. If `myPet` already exists in the global scope, our definition will result in an error.  
 
-  Since functions create their own scopes, let's tryp putting the variable inside a function to hide it from the rest of the program:  
+  Since functions create their own scopes, let's try putting the variable inside a function to hide it from the rest of the program:  
 
   ```javascript
   // thousands of lines of messy JavaScript code!
@@ -1107,7 +1105,7 @@ let inventory = {
 };
 ```
 
-This implementation will work, however, it has limitations particularly when it comes to validating the stock objects that are added to the stocks list. For instance, it is common that stock items should be unique. In our scenario, we could take this to mean that the names of stock objects have to be unique. Here's an example run that demonstrates this limitation:  
+This implementation will work, however, it has limitations particularly when it comes to validating the stock objects that are added to the stocks list. For instance, it is common that stock items should be unique. In our scenario, we could take this to mean that the names of stock objects have to be unique. Here's an example run that demonstrates this limitation: 
 
 ```javascript
 inventory.stocks.push({
@@ -1144,7 +1142,7 @@ let inventory = {
   },
   addStock(newStock) {
     let isValid = this.stocks.every(function(stock) {
-      return newStock.name ! == stock.name;
+      return newStock.name !== stock.name;
     });
     
     if (isValid) { this.stocks.push(newStock) };
@@ -1263,8 +1261,6 @@ let inventory = (function() {
   };
 })();
 ```
-
-
 
 
 
@@ -1422,7 +1418,7 @@ let inventory = (function() {
   }
   ```
 
-* The factory function allows us to create same "type" of objecs easily with a pre-defined "template," however, it also has some disadvantages:
+* The factory function allows us to create same "type" of objects easily with a pre-defined "template," however, it also has some disadvantages:
 
   * Every object created with the factory function has a full copy of all the methods, which can be redundant.
   * There isn't a way for us to inspect an object and know whether we created it from a factory function. This makes it difficult to identify whether an object is of a specific "type."
@@ -1484,7 +1480,7 @@ let inventory = (function() {
 
 * ###### `this` is returned if the constructor doesn't explicitly return an object
 
-  It can be a subtle bug if you don't take note of the implication of not return an object. A typical scenario for this is when you have validation as part of the body of the constructor function. For instance, let us modify our `Person` constructor function to validate that a `lastName` is provided. If no `lastName` is provided, we will inform the user via the returned value.
+  It can be a subtle bug if you don't take note of the implication of not returning an object. A typical scenario for this is when you have validation as part of the body of the constructor function. For instance, let us modify our `Person` constructor function to validate that a `lastName` is provided. If no `lastName` is provided, we will inform the user via the returned value.
 
   ```javascript
   function Person(firstName, lastName) {
@@ -1528,7 +1524,7 @@ let inventory = (function() {
 
 ##### Function Prototypes and Object Prototypes
 
-* In JavaScript, every **function** has a special `prototype` property. It is assigned, by default, an object that instances created by the constructor function can delegate to. Note that this `prototype` property is only used when we use the function as a constructor, in which case all objects that it constructs will have this object set as their prototype. This is a mouthful, but it's easier to show this in code:  
+* In JavaScript, every **function** has a special `prototype` property. It is assigned, by default, to an object that instances created by the constructor function can delegate to. Note that this `prototype` property is only used when we use the function as a constructor, in which case all objects that it constructs will have this object set as their prototype. This is a mouthful, but it's easier to show this in code:  
 
   ```javascript
   let Foo = function() {};
@@ -1638,9 +1634,8 @@ let inventory = (function() {
 
   You've already seen examples of static methods on built-in JavaScript constructors. `Object.assign`, `Array.isArray`, and `Date.now` are all examples of static methods.
 
-* You may sometimes here such methods described as _class methods_. However, in JavaScript, that's a bit of a misnomer. Instead, you should call such methods **static methods**.
+* You may sometimes hear such methods described as _class methods_. However, in JavaScript, that's a bit of a misnomer. Instead, you should call such methods **static methods**.
 
-* 
 
 #### Prototype objects
 
@@ -1690,7 +1685,7 @@ let inventory = (function() {
 
 ##### The `__proto__` Property
 
-* Many older JavaScript programs use a property named `__proto__`, which is pronounced **dunder prototype** instead of `Object.setPrototypeOf` and `Object.getPrototypeOf`. "dunder" is a shortened version of "double underscore", which alludes to teh double underscores at the beginning and end of the name. The `__proto__` property is a _deprecated_, non-hidden version of the `[[Prototype]]` property. As a rule, you should only use `__proto__` if you need to support very old browsers or old versions of Node, or as a convenient shortcut with temporary code or debugging operations. You may run into code that uses it, so you need to at least be aware of it.  
+* Many older JavaScript programs use a property named `__proto__`, which is pronounced **dunder prototype** instead of `Object.setPrototypeOf` and `Object.getPrototypeOf`. "dunder" is a shortened version of "double underscore", which alludes to the double underscores at the beginning and end of the name. The `__proto__` property is a _deprecated_, non-hidden version of the `[[Prototype]]` property. As a rule, you should only use `__proto__` if you need to support very old browsers or old versions of Node, or as a convenient shortcut with temporary code or debugging operations. You may run into code that uses it, so you need to at least be aware of it.  
 
 ##### Prototype Chain and the Object.prototype Object
 
@@ -1726,7 +1721,7 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
 
 ##### More Methods on the Object Constructor
 
-* We'd like to highlight a fe more methods on the `Object` constructor.
+* We'd like to highlight a few more methods on the `Object` constructor.
 
 ###### Object.create and Object.getPrototypeOf
 
@@ -2051,7 +2046,7 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
 
 * OLOO, which stands for "Object Linking to Other Objects," was first popularized by Kyle Simpson. JavaScript sheds its pretense as a "class oriented" language, where it uses constructor functions as fake classes. Instead, it embraces its prototype based object model.
 
-* With the OLOO pattern, we define the shared beahviors on a prototype object, then use `Object.create` to create objects that delegate directly from that object, without going through the roundabout way that involves "constructors and their properties."
+* With the OLOO pattern, we define the shared behaviors on a prototype object, then use `Object.create` to create objects that delegate directly from that object, without going through the roundabout way that involves "constructors and their properties."
 
   ```javascript
   let Point = {							// capitalized name for the prototype as a convention
@@ -2088,7 +2083,7 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
   If you want, you can provide default values so you don't need to call `init`:  
 
   ```javascript
-  let Point = {             // capitalized name for the prototype as a convntion
+  let Point = {             // capitalized name for the prototype as a convention
     x: 0,
     y: 0,
   
@@ -2118,9 +2113,6 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
   pointB.onXAxis();                   // true
   ```
 
-  
-
-* 
 
 #### `class` syntax
 
@@ -2243,7 +2235,7 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
 
 ##### Static Methods using `class` syntax
 
-* It should come as no surprise that you can defined static methods with the `class` keyword as well: just use the `static` keyword:
+* It should come as no surprise that you can define static methods with the `class` keyword as well: just use the `static` keyword:
 
   ```javascript
   class Rectangle {
@@ -2312,7 +2304,7 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
   };
   ```
 
-  Let's convert that code to use classes instead of constructors and prototypes. The `Square` consructor's prototype inherits from `Rectangle.prototype`, which gives square objects access to methods defined for rectangle objects. We can do the same thing with classes, but we now use the clean, straightforward syntax provided for JavaScript classes:
+  Let's convert that code to use classes instead of constructors and prototypes. The `Square` constructor's prototype inherits from `Rectangle.prototype`, which gives square objects access to methods defined for rectangle objects. We can do the same thing with classes, but we now use the clean, straightforward syntax provided for JavaScript classes:
 
   ````javascript
   class Rectangle {
@@ -2397,7 +2389,7 @@ Object.getPrototypeOf(foo) === Object.prototype;		// true
 
 ### Further Reading
 
-In addition to the course content, you may also find these articles written by one of our students for the weekly JavaScript study group as helpful in your review. These articles cut across concepts and give an additional perspective that may help firm up your understanding and mental model of the concepts that we've covered in this course.
+In addition to the course content, you may also find these articles written by one of our students for the weekly JavaScript study group as helpful in your review. These article's cut across concepts and give an additional perspective that may help firm up your understanding and mental model of the concepts that we've covered in this course.
 
 - [JavaScript Weekly: Making Sense of Closures](https://medium.com/launch-school/javascript-weekly-making-sense-of-closures-daa2e0b56f88)
 - [JavaScript Weekly: Understanding Links on the Object Prototype Chain](https://medium.com/launch-school/javascript-weekly-understanding-links-on-the-object-prototype-chain-12962f05e149)
